@@ -1,0 +1,12 @@
+[Unit]
+Description=LIRC Infrared Mouse Event Signal Decoder
+Requires=lirc.service
+After=network.target lirc.service
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/lirc
+ExecStart=/usr/sbin/lircmd  $LIRCMD_OPTIONS --nodaemon
+
+[Install]
+WantedBy=multi-user.target
