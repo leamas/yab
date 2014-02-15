@@ -1,7 +1,7 @@
 [Unit]
 Description=LIRC Infrared Mouse Event Signal Decoder
-Requires=lirc.service
-After=network.target lirc.service
+Requires=lircd.service
+After=network.target lircd.service
 
 [Service]
 Type=simple
