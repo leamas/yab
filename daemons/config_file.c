@@ -765,11 +765,9 @@ static struct ir_remote *read_config_recursive(FILE * f, const char *name, int d
 				} else if (mode == ID_codes) {
 					code = defineCode(key, val, &name_code);
 					while (!parse_error && val2 != NULL) {
-						struct ir_code_node *node;
-
 						if (val2[0] == '#')
 							break;	/* comment */
-						node = defineNode(code, val2);
+						defineNode(code, val2);
 						val2 = strtok(NULL, whitespace);
 					}
 					code->current = NULL;
@@ -838,11 +836,9 @@ static struct ir_remote *read_config_recursive(FILE * f, const char *name, int d
 				} else if (mode == ID_codes) {
 					code = defineCode(key, val, &name_code);
 					while (!parse_error && val2 != NULL) {
-						struct ir_code_node *node;
-
 						if (val2[0] == '#')
 							break;	/* comment */
-						node = defineNode(code, val2);
+						defineNode(code, val2);
 						val2 = strtok(NULL, whitespace);
 					}
 					code->current = NULL;
@@ -870,11 +866,9 @@ static struct ir_remote *read_config_recursive(FILE * f, const char *name, int d
 				case ID_codes:
 					code = defineCode(key, val, &name_code);
 					while (!parse_error && val2 != NULL) {
-						struct ir_code_node *node;
-
 						if (val2[0] == '#')
 							break;	/* comment */
-						node = defineNode(code, val2);
+						defineNode(code, val2);
 						val2 = strtok(NULL, whitespace);
 					}
 					code->current = NULL;

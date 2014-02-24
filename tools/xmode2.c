@@ -222,7 +222,6 @@ void closescreen(void)
 int main(int argc, char **argv)
 {
 	fd_set rfds;
-	int retval;
 	int xfd, maxfd;
 
 	int fd;
@@ -410,7 +409,7 @@ int main(int argc, char **argv)
 		FD_SET(fd, &rfds);
 		FD_SET(xfd, &rfds);
 
-		retval = select(maxfd + 1, &rfds, NULL, NULL, NULL);
+		select(maxfd + 1, &rfds, NULL, NULL, NULL);
 
 		if (FD_ISSET(fd, &rfds)) {
 			if (use_stdin) {

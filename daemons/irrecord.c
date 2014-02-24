@@ -2332,7 +2332,7 @@ int get_gap_length(struct ir_remote *remote)
 {
 	struct lengths *gaps = NULL;
 	struct timeval start, end, last = { 0, 0 };
-	int count, flag;
+	int flag;
 	struct lengths *scan;
 	int maxcount, lastmaxcount;
 	lirc_t gap;
@@ -2340,7 +2340,6 @@ int get_gap_length(struct ir_remote *remote)
 	remote->eps = eps;
 	remote->aeps = aeps;
 
-	count = 0;
 	flag = 0;
 	lastmaxcount = 0;
 	printf("Hold down an arbitrary button.\n");
