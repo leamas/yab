@@ -1,4 +1,10 @@
 # Mostly auto-generated build cruft
+core*
+*.patch
+*.tar.gz
+*.tar.bz2
+*.rej
+*.orig
 */Makefile.in
 */*/Makefile.in
 */Makefile
