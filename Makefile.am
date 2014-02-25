@@ -14,7 +14,7 @@ if SYSTEMD_INSTALL
     SYSTEMD_DIR = systemd
 endif
 
-SUBDIRS = drivers daemons tools doc $(SYSTEMD_DIR)
+SUBDIRS = lib drivers daemons tools doc $(SYSTEMD_DIR)
 
 ## From automake documentation:
 ## Note that EXTRA_DIST can only handle files in the current

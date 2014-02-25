@@ -1629,6 +1629,7 @@ dnl SHELL=/bin/sh AC_SUBST(SHELL)
 dnl write these decisions out to the Makefiles
 AC_CONFIG_FILES([
   Makefile
+  lib/Makefile
   drivers/Makefile
   drivers/lirc_dev/Makefile
   drivers/lirc_wpc8769l/Makefile
