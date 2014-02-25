@@ -161,7 +161,6 @@ if test x${no_kernel} != xyes; then
   possible_drivers="${possible_drivers} \
 	(all) \
 	(lirc_dev) \
-	(lirc_dev lirc_gpio) \
 	(lirc_dev lirc_i2c) \
 	(lirc_dev lirc_wpc8769l)"
 fi
@@ -578,9 +577,6 @@ if test "$driver" = "userspace" -o "$driver" = "all"; then
 	irreal)
 		#hw_module="${hw_module} hw_irreal.o serial.o receive.o transmit.o"
 		;;
-	lirc_dev-lirc_gpio)
-		#lirc_driver="${lirc_driver} lirc_dev lirc_gpio"
-		;;
 	lirc_dev-lirc_i2c)
 		#lirc_driver="${lirc_driver} lirc_dev lirc_i2c"
 		;;
@@ -767,31 +763,31 @@ if test "$driver" = "audio_alsa"; then
 fi
 
 if test "$driver" = "avermedia"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="avermedia/lircd.conf.avermedia"
   lircmd_conf="avermedia/lircmd.conf.avermedia"
 fi
 
 if test "$driver" = "avermedia98"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="avermedia/lircd.conf.avermedia98"
   lircmd_conf="avermedia/lircmd.conf.avermedia98"
 fi
 
 if test "$driver" = "avermedia_vdomate"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="avermedia/lircd.conf.vdomate"
 #  lircmd_conf="avermedia/lircmd.conf.vdomate"
 fi
 
 if test "$driver" = "bestbuy"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="bestbuy/lircd.conf.bestbuy"
   lircmd_conf="bestbuy/lircmd.conf.bestbuy"
 fi
 
 if test "$driver" = "bestbuy2"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="bestbuy/lircd.conf.bestbuy2"
   lircmd_conf="bestbuy/lircmd.conf.bestbuy2"
 fi
@@ -827,7 +823,7 @@ if test "$driver" = "caraca"; then
 fi
 
 if test "$driver" = "chronos"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="chronos/lircd.conf.chronos"
 #  lircmd_conf="chronos/lircmd.conf.chronos"
 fi
@@ -845,7 +841,7 @@ if test "$driver" = "commandir"; then
 fi
 
 if test "$driver" = "cph03x" -o "$driver" = "cph06x"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="cph03x/lircd.conf.cph03x"
 #  lircmd_conf="cph03x/lircmd.conf.cph03x"
 fi
@@ -909,7 +905,7 @@ if test "$driver" = "exaudio"; then
 fi
 
 if test "$driver" = "flyvideo"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="life-view/lircd.conf.flyvideo"
   lircmd_conf="life-view/lircmd.conf.flyvideo"
 fi
@@ -922,7 +918,7 @@ if test "$driver" = "ftdi"; then
 fi
 
 if test "$driver" = "gvbctv5pci"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="iodata/lircd.conf.gvbctv5pci"
 #  lircmd_conf="iodata/lircmd.conf.gvbctv5pci"
 fi
@@ -1026,19 +1022,19 @@ if test "$driver" = "knc_one"; then
 fi
 
 if test "$driver" = "kworld"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="kworld/lircd.conf.kworld"
 #  lircmd_conf="kworld/lircmd.conf.kworld"
 fi
 
 if test "$driver" = "leadtek_0007"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="leadtek/lircd.conf.RM-0007"
   lircmd_conf="leadtek/lircmd.conf.RM-0007"
 fi
 
 if test "$driver" = "leadtek_0010"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="leadtek/lircd.conf.RM-0010"
   lircmd_conf="leadtek/lircmd.conf.RM-0010"
 fi
@@ -1168,14 +1164,14 @@ if test "$driver" = "pixelview_bt878"; then
 fi
 
 if test "$driver" = "pixelview_pak"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
 # the config files are the same as for the PlayTV pro
   lircd_conf="pixelview/lircd.conf.playtv_pro"
   lircmd_conf="pixelview/lircmd.conf.playtv_pro"
 fi
 
 if test "$driver" = "pixelview_pro"; then
-  lirc_driver="lirc_dev lirc_gpio"
+  lirc_driver="lirc_dev"
   lircd_conf="pixelview/lircd.conf.playtv_pro"
   lircmd_conf="pixelview/lircmd.conf.playtv_pro"
 fi
@@ -1640,7 +1636,6 @@ AC_CONFIG_FILES([
   Makefile
   drivers/Makefile
   drivers/lirc_dev/Makefile
-  drivers/lirc_gpio/Makefile
   drivers/lirc_i2c/Makefile
   drivers/lirc_wpc8769l/Makefile
   daemons/Makefile

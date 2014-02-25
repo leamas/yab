@@ -9,7 +9,6 @@ EXTRA_DIST = lirc.h kcompat.h Makefile.kernel Makefile.common
 
 DIST_SUBDIRS = \
 	lirc_dev \
-	lirc_gpio \
 	lirc_i2c \
 	lirc_wpc8769l
 
