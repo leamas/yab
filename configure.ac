@@ -163,7 +163,6 @@ if test x${no_kernel} != xyes; then
 	(lirc_dev) \
 	(lirc_dev lirc_gpio) \
 	(lirc_dev lirc_i2c) \
-	(lirc_dev lirc_sasem) \
 	(lirc_dev lirc_wpc8769l)"
 fi
 
@@ -434,7 +433,7 @@ AC_ARG_WITH(driver,
                           pcmak_usb, pctv, pixelview_bt878,
                           pixelview_pak, pixelview_pro, provideo,
                           realmagic, remotemaster, sa1100, samsung,
-                          sasem, sb0540, silitek, slinke,
+                          sb0540, silitek, slinke,
                           srm7500libusb, tekram,
                           tira, tira_raw,
                           tuxbox, tvbox, udp, uirt2, uirt2_raw,
@@ -584,8 +583,6 @@ if test "$driver" = "userspace" -o "$driver" = "all"; then
 		;;
 	lirc_dev-lirc_i2c)
 		#lirc_driver="${lirc_driver} lirc_dev lirc_i2c"
-		;;
-	lirc_dev-lirc_sasem)
 		;;
 	lirc_dev-lirc_wpc8769l)
 		;;
@@ -1210,11 +1207,6 @@ if test "$driver" = "sa1100"; then
   AC_DEFINE(LIRC_ON_SA1100)
 fi
 
-if test "$driver" = "sasem"; then
-  lirc_driver="lirc_dev lirc_sasem"
-  lircd_conf="sasem/lircd.conf.sasem"
-fi
-
 if test "$driver" = "samsung"; then
   lirc_driver="$driver"
   hw_module="hw_hiddev.o"
@@ -1417,7 +1409,6 @@ if test "$lirc_driver" = "none" || \
 elif test "$lirc_driver" = "all"; then
   lirc_driver="_dev \
 	lirc_i2c \
-	lirc_sasem \
 	lirc_wpc8769l"
 fi
 if kernel_module=$(expr "$lirc_driver" : 'lirc_dev \(.*\)'); then
@@ -1651,7 +1642,6 @@ AC_CONFIG_FILES([
   drivers/lirc_dev/Makefile
   drivers/lirc_gpio/Makefile
   drivers/lirc_i2c/Makefile
-  drivers/lirc_sasem/Makefile
   drivers/lirc_wpc8769l/Makefile
   daemons/Makefile
   tools/Makefile
