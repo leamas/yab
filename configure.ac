@@ -164,7 +164,6 @@ if test x${no_kernel} != xyes; then
 	(lirc_dev lirc_atiusb) \
 	(lirc_dev lirc_gpio) \
 	(lirc_dev lirc_i2c) \
-	(lirc_dev lirc_ttusbir) \
 	(lirc_dev lirc_imon) \
 	(lirc_dev lirc_parallel) \
 	(lirc_dev lirc_sasem) \
@@ -451,7 +450,7 @@ AC_ARG_WITH(driver,
                           realmagic, remotemaster, sa1100, samsung,
                           sasem, sb0540, serial, silitek, sir, slinke,
                           srm7500libusb, tekram,
-                          tira, tira_raw, ttusbir,
+                          tira, tira_raw,
                           tuxbox, tvbox, udp, uirt2, uirt2_raw,
                           usb_uirt_raw, usbx, wpc8769l],
 driver=${withval},
@@ -601,8 +600,6 @@ if test "$driver" = "userspace" -o "$driver" = "all"; then
 		;;
 	lirc_dev-lirc_i2c)
 		#lirc_driver="${lirc_driver} lirc_dev lirc_i2c"
-		;;
-	lirc_dev-lirc_ttusbir)
 		;;
 	lirc_dev-lirc_imon)
 		;;
@@ -1355,10 +1352,6 @@ if test "$driver" = "tira_raw"; then
   HW_DEFAULT="hw_tira_raw"
 fi
 
-if test "$driver" = "ttusbir"; then
-  lirc_driver="lirc_dev lirc_ttusbir"
-fi
-
 if test "$driver" = "tuxbox"; then
   lirc_driver="none"
   hw_module="hw_default.o receive.o transmit.o"
@@ -1506,7 +1499,6 @@ elif test "$lirc_driver" = "all"; then
 	lirc_sasem \
 	lirc_serial \
 	lirc_sir \
-	lirc_ttusbir \
 	lirc_wpc8769l"
 fi
 if kernel_module=$(expr "$lirc_driver" : 'lirc_dev \(.*\)'); then
@@ -1765,7 +1757,6 @@ AC_CONFIG_FILES([
   drivers/lirc_dev/Makefile
   drivers/lirc_gpio/Makefile
   drivers/lirc_i2c/Makefile
-  drivers/lirc_ttusbir/Makefile
   drivers/lirc_imon/Makefile
   drivers/lirc_parallel/Makefile
   drivers/lirc_sasem/Makefile
