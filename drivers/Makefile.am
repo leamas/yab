@@ -12,7 +12,6 @@ DIST_SUBDIRS = \
 	lirc_gpio \
 	lirc_i2c \
 	lirc_imon \
-	lirc_parallel \
 	lirc_sasem \
 	lirc_sir \
 	lirc_wpc8769l
