@@ -13,7 +13,6 @@ DIST_SUBDIRS = \
 	lirc_i2c \
 	lirc_imon \
 	lirc_sasem \
-	lirc_sir \
 	lirc_wpc8769l
 
 SUBDIRS = @lirc_driver@
