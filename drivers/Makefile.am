@@ -1,6 +1,6 @@
 ## $Id: Makefile.am,v 5.37 2010/03/21 11:57:49 lirc Exp $
 
-## Process this file with automake to produce Makefile.in 
+## Process this file with automake to produce Makefile.in
 
 ## here the correct driver is substituted in by the configure script
 ## (or empty for none)
@@ -13,7 +13,6 @@ DIST_SUBDIRS = \
 	lirc_bt829 \
 	lirc_gpio \
 	lirc_i2c \
-	lirc_igorplugusb \
 	lirc_imon \
 	lirc_parallel \
 	lirc_sasem \

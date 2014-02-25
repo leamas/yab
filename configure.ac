@@ -165,7 +165,6 @@ if test x${no_kernel} != xyes; then
 	(lirc_dev lirc_bt829) \
 	(lirc_dev lirc_gpio) \
 	(lirc_dev lirc_i2c) \
-	(lirc_dev lirc_igorplugusb) \
 	(lirc_dev lirc_ttusbir) \
 	(lirc_dev lirc_imon) \
 	(lirc_dev lirc_parallel) \
@@ -439,7 +438,7 @@ AC_ARG_WITH(driver,
                           exaudio, flyvideo, ftdi, gvbctv5pci,
                           hauppauge, hauppauge_dvb,
                           hercules_smarttv_stereo, i2cuser,
-                          igorplugusb, iguanaIR, imon, imon_24g,
+                          iguanaIR, imon, imon_24g,
                           imon_knob, imon_lcd, imon_pad, imon_rsc,
                           irdeo, irdeo_remote, irlink, irman, irreal,
                           knc_one, kworld,
@@ -603,8 +602,6 @@ if test "$driver" = "userspace" -o "$driver" = "all"; then
 		;;
 	lirc_dev-lirc_i2c)
 		#lirc_driver="${lirc_driver} lirc_dev lirc_i2c"
-		;;
-	lirc_dev-lirc_igorplugusb)
 		;;
 	lirc_dev-lirc_ttusbir)
 		;;
@@ -1011,10 +1008,6 @@ if test "$driver" = "i2cuser"; then
   lirc_driver="none"
   hw_module="hw_i2cuser.o receive.o"
   HW_DEFAULT="hw_i2cuser"
-fi
-
-if test "$driver" = "igorplugusb"; then
-  lirc_driver="lirc_dev lirc_igorplugusb"
 fi
 
 if test "$driver" = "iguanaIR"; then
@@ -1516,7 +1509,6 @@ elif test "$lirc_driver" = "all"; then
 	lirc_atiusb \
 	lirc_bt829 \
 	lirc_i2c \
-	lirc_igorplugusb \
 	lirc_imon \
 	lirc_parallel \
 	lirc_sasem \
@@ -1782,7 +1774,6 @@ AC_CONFIG_FILES([
   drivers/lirc_dev/Makefile
   drivers/lirc_gpio/Makefile
   drivers/lirc_i2c/Makefile
-  drivers/lirc_igorplugusb/Makefile
   drivers/lirc_ttusbir/Makefile
   drivers/lirc_imon/Makefile
   drivers/lirc_parallel/Makefile
