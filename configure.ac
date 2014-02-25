@@ -163,7 +163,6 @@ if test x${no_kernel} != xyes; then
 	(lirc_dev) \
 	(lirc_dev lirc_gpio) \
 	(lirc_dev lirc_i2c) \
-	(lirc_dev lirc_imon) \
 	(lirc_dev lirc_sasem) \
 	(lirc_dev lirc_wpc8769l)"
 fi
@@ -423,7 +422,7 @@ AC_ARG_WITH(driver,
                           exaudio, flyvideo, ftdi, gvbctv5pci,
                           hauppauge, hauppauge_dvb,
                           hercules_smarttv_stereo, i2cuser,
-                          iguanaIR, imon, imon_24g,
+                          iguanaIR, imon_24g,
                           imon_knob, imon_lcd, imon_pad, imon_rsc,
                           irdeo, irdeo_remote, irlink, irman, irreal,
                           knc_one, kworld,
@@ -585,8 +584,6 @@ if test "$driver" = "userspace" -o "$driver" = "all"; then
 		;;
 	lirc_dev-lirc_i2c)
 		#lirc_driver="${lirc_driver} lirc_dev lirc_i2c"
-		;;
-	lirc_dev-lirc_imon)
 		;;
 	lirc_dev-lirc_sasem)
 		;;
@@ -963,34 +960,29 @@ if test "$driver" = "iguanaIR"; then
   iguanaIR_lib=-liguanaIR
 fi
 
-if test "$driver" = "imon"; then
-  lirc_driver="lirc_dev lirc_imon"
-  lircd_conf="imon/lircd.conf.imon"
-fi
-
 if test "$driver" = "imon_24g"; then
-  lirc_driver="lirc_dev lirc_imon"
+  lirc_driver="lirc_dev"
   lircd_conf="imon/lircd.conf.imon-2.4g"
 fi
 
 if test "$driver" = "imon_knob"; then
-  lirc_driver="lirc_dev lirc_imon"
+  lirc_driver="lirc_dev"
   lircd_conf="imon/lircd.conf.imon-knob"
 fi
 
 if test "$driver" = "imon_lcd"; then
-  lirc_driver="lirc_dev lirc_imon"
+  lirc_driver="lirc_dev"
   lircd_conf="imon/lircd.conf.imon"
   AC_DEFINE(LIRC_IMON_LCD)
 fi
 
 if test "$driver" = "imon_pad"; then
-  lirc_driver="lirc_dev lirc_imon"
+  lirc_driver="lirc_dev"
   lircd_conf="imon/lircd.conf.imon-pad"
 fi
 
 if test "$driver" = "imon_rsc"; then
-  lirc_driver="lirc_dev lirc_imon"
+  lirc_driver="lirc_dev"
   lircd_conf="imon/lircd.conf.imon-rsc"
 fi
 
@@ -1425,7 +1417,6 @@ if test "$lirc_driver" = "none" || \
 elif test "$lirc_driver" = "all"; then
   lirc_driver="_dev \
 	lirc_i2c \
-	lirc_imon \
 	lirc_sasem \
 	lirc_wpc8769l"
 fi
@@ -1660,7 +1651,6 @@ AC_CONFIG_FILES([
   drivers/lirc_dev/Makefile
   drivers/lirc_gpio/Makefile
   drivers/lirc_i2c/Makefile
-  drivers/lirc_imon/Makefile
   drivers/lirc_sasem/Makefile
   drivers/lirc_wpc8769l/Makefile
   daemons/Makefile
