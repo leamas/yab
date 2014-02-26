@@ -17,7 +17,6 @@ bin_PROGRAMS          = irrecord
 irrecord_SOURCES      = irrecord.c  $(lib_headers)
 irrecord_LDADD        = -L../lib -llirc
 
-#irrecord_LDADD = libhw_module.a @hw_module_libs@ @receive@
 #irrecord_DEPENDENCIES = @receive@
 
 ## maintainer mode stuff

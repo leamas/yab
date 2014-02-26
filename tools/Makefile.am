@@ -3,7 +3,7 @@
 ## Process this file with automake to produce Makefile.in
 ACLOCAL_AMFLAGS             = -I m4
 
-AM_CPPFLAGS = -I$(top_srcdir) -I../lib @X_CFLAGS@
+AM_CPPFLAGS = -I$(top_srcdir) @X_CFLAGS@ -I../lib
 
 EXTRA_PROGRAMS = smode2 xmode2 irxevent
 bin_PROGRAMS = irw irpty irexec ircat mode2 irsend \
@@ -24,7 +24,7 @@ ircat_LDADD = -L../lib -llirc_client -llirc
 mode2_SOURCES = mode2.c
 irsend_SOURCES = irsend.c
 
-mode2_LDADD = ../daemons/libhw_module.a @hw_module_libs@ -L../lib -llirc
+mode2_LDADD = -L../lib -llirc
 
 ## vga programs
 smode2_SOURCES = smode2.c
@@ -35,8 +35,7 @@ irxevent_SOURCES = irxevent.c
 irxevent_LDADD = @X_LIBS@ @X_PRE_LIBS@ -lX11 @X_EXTRA_LIBS@ -L../lib -llirc_client -llirc
 irxevent_DEPENDENCIES = ../lib/liblirc_client.la
 xmode2_SOURCES = xmode2.c
-xmode2_LDADD = ../daemons/libhw_module.a @hw_module_libs@ \
-	@X_LIBS@ @X_PRE_LIBS@ -lX11 @X_EXTRA_LIBS@ -L../lib -llirc
+xmode2_LDADD = -L../lib -llirc @X_LIBS@ @X_PRE_LIBS@ -lX11 @X_EXTRA_LIBS@
 
 ## lircrcd
 lircrcd_SOURCES = lircrcd.c
