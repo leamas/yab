@@ -187,26 +187,8 @@ AH_TEMPLATE([HAVE_ALSA_SB_RC],
 AH_TEMPLATE([HAVE_FORKPTY],
 	[Define if forkpty is available])
 
-AH_TEMPLATE([HAVE_IGUANAIR],
-	[Define if the iguanaIR library is installed])
-
-AH_TEMPLATE([HAVE_FTDI],
-	[Define if the libftdi library is installed])
-
 AH_TEMPLATE([HAVE_LIBALSA],
 	[Define if the ALSA library is installed])
-
-AH_TEMPLATE([HAVE_LIBCARACA],
-	[Define if the caraca library is installed])
-
-AH_TEMPLATE([HAVE_LIBIRMAN],
-	[Define if the libirman library is installed])
-
-AH_TEMPLATE([HAVE_LIBIRMAN_SW],
-	[Define if the software only test version of libirman is installed])
-
-AH_TEMPLATE([HAVE_LIBPORTAUDIO],
-	[Define if the portaudio library is installed])
 
 AH_TEMPLATE([HAVE_LIBUSB],
 	[Define if libusb is installed])
@@ -244,41 +226,11 @@ AH_TEMPLATE([LIRC_DRIVER_ANY],
 AH_TEMPLATE([LIRC_HAVE_DEVFS],
 	[Define if devfs support is present in current kernel])
 
-AH_TEMPLATE([LIRC_IRQ],
-	[Set the IRQ for the lirc driver])
-
 AH_TEMPLATE([LIRC_IRTTY],
 	[Set the default tty used by the drivers accessing /dev/ttyX])
 
 AH_TEMPLATE([LIRC_ON_SA1100],
 	[Define if you want to cross-compile for the SA1100])
-
-AH_TEMPLATE([LIRC_SERIAL_ANIMAX],
-	[Define if you have an animax serial port receiver])
-
-AH_TEMPLATE([LIRC_SERIAL_IGOR],
-	[Define if you have an Igor Cesko receiver])
-
-AH_TEMPLATE([LIRC_SERIAL_IRDEO],
-	[Define if you have an IRdeo serial port receiver])
-
-AH_TEMPLATE([LIRC_SERIAL_IRDEO_REMOTE],
-	[Define if you have an IRdeo remote transmitter])
-
-AH_TEMPLATE([LIRC_SERIAL_NSLU2],
-	[Define if you have a Linksys NSLU2 and use CTS2+GreenLED])
-
-AH_TEMPLATE([LIRC_SERIAL_SOFTCARRIER],
-	[Define if the software needs to generate the carrier frequency])
-
-AH_TEMPLATE([LIRC_SIR_ACTISYS_ACT200L],
-	[Define if you want to use a Actisys Act200L])
-
-AH_TEMPLATE([LIRC_SIR_ACTISYS_ACT220L],
-	[Define if you want to use a Actisys Act220L])
-
-AH_TEMPLATE([LIRC_SIR_TEKRAM],
-	[Define if you want to use a Tekram Irmate 210])
 
 AH_TEMPLATE([LIRC_SYSLOG],
 	[syslog facility to use])
@@ -300,7 +252,6 @@ AH_TEMPLATE([USE_SYSLOG],
 
 
 AC_CHECK_LIB(caraca_client, caraca_init,[
-    AC_DEFINE(HAVE_LIBCARACA)
     AM_CONDITIONAL([BUILD_CARACA],[true])
   possible_drivers="${possible_drivers} (caraca)"],[
     AM_CONDITIONAL([BUILD_CARACA],[false])]
@@ -312,26 +263,22 @@ AC_CHECK_HEADER(usb.h,[
   AM_CONDITIONAL([BUILD_USB],[false])]
 )
 AC_CHECK_HEADER(ftdi.h,[
-  AC_DEFINE(HAVE_FTDI)
   AM_CONDITIONAL([BUILD_FTDI],[true])
   possible_drivers="${possible_drivers} (ftdi)"],[
   AM_CONDITIONAL([BUILD_FTDI],[false])]
 )
 AC_CHECK_HEADER(iguanaIR.h,[
   AM_CONDITIONAL([BUILD_IGUANAIR],[true])
-  AC_DEFINE(HAVE_IGUANAIR)
   possible_drivers="${possible_drivers} (iguanaIR)"],[
   AM_CONDITIONAL([BUILD_IGUANAIR],[false])]
 )
 AC_CHECK_LIB(irman, ir_strerror,[
-  AC_DEFINE(HAVE_LIBIRMAN)
   AM_CONDITIONAL([BUILD_LIBIRMAN],[true])
   possible_drivers="${possible_drivers} (irman)"
   ],[
   AM_CONDITIONAL([BUILD_LIBIRMAN],[false])]
 )
 AC_CHECK_LIB(irman_sw, ir_strerror,[
-  AC_DEFINE(HAVE_LIBIRMAN_SW)
   AM_CONDITIONAL([BUILD_LIBIRMAN_SW],[true])
   possible_drivers="${possible_drivers} (irman_sw)"
   ],[
@@ -341,7 +288,6 @@ dnl audio driver requires PortAudio library installed and some linker flags
 AC_CHECK_HEADERS(portaudio.h,[
   AC_CHECK_LIB(portaudio, Pa_Initialize,[
     AM_CONDITIONAL([BUILD_LIBPORTAUDIO],[true])
-    AC_DEFINE(HAVE_LIBPORTAUDIO)
     possible_drivers="${possible_drivers} (audio)"
     ],[
     AM_CONDITIONAL([BUILD_LIBPORTAUDIO],[false])
@@ -522,12 +468,10 @@ fi
 
 if test "$driver" = "act200l"; then
   lirc_driver="lirc_dev"
-  AC_DEFINE(LIRC_SIR_ACTISYS_ACT200L)
 fi
 
 if test "$driver" = "act220l"; then
   lirc_driver="lirc_dev"
-  AC_DEFINE(LIRC_SIR_ACTISYS_ACT220L)
 fi
 
 if test "$driver" = "adaptec"; then
@@ -547,7 +491,6 @@ if test "$driver" = "animax"; then
   lirc_driver="lirc_dev"
   lircd_conf="animax/lircd.conf.animax"
   lircmd_conf="animax/lircmd.conf.animax"
-  AC_DEFINE(LIRC_SERIAL_ANIMAX)
 fi
 
 if test "$driver" = "asusdh"; then
@@ -784,12 +727,10 @@ fi
 
 if test "$driver" = "irdeo"; then
   lirc_driver="lirc_dev"
-  AC_DEFINE(LIRC_SERIAL_IRDEO)
 fi
 
 if test "$driver" = "irdeo_remote"; then
   lirc_driver="lirc_dev"
-  AC_DEFINE(LIRC_SERIAL_IRDEO_REMOTE)
 fi
 
 if test "$driver" = "irlink"; then
@@ -921,7 +862,6 @@ fi
 
 if test "$driver" = "nslu2"; then
   lirc_driver="lirc_dev"
-  AC_DEFINE(LIRC_SERIAL_NSLU2)
 fi
 
 if test "$driver" = "packard_bell"; then
@@ -1024,7 +964,6 @@ fi
 
 if test "$driver" = "tekram"; then
   lirc_driver="lirc_dev"
-  AC_DEFINE(LIRC_SIR_TEKRAM)
 fi
 
 if test "$driver" = "tira"; then
@@ -1216,18 +1155,9 @@ AC_ARG_ENABLE(dyncodes,
 [  --enable-dyncodes       use dynamic codes],
 test x${enableval} = xyes && AC_DEFINE(DYNCODES))
 
-AC_ARG_WITH(irq,
-[  --with-irq=irq          specify the irq line for the lirc device.],
-irq=${withval}
-)
-
 AC_ARG_WITH(tty,
 [  --with-tty=file         specify the tty to use (Irman, RemoteMaster, etc.)],
 irtty=${withval})
-
-AC_ARG_WITH(igor,
-[  --with-igor             use this if you have an Igor Cesko receiver],
-test x${withval} = xyes && AC_DEFINE(LIRC_SERIAL_IGOR))
 
 AC_ARG_ENABLE(debug,
 [  --enable-debug          enable debugging features],
@@ -1328,9 +1258,6 @@ AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 
 AC_DEFINE_UNQUOTED(LIRC_DRIVER, "$driver")
-if test "$irq" != ""; then
-  AC_DEFINE_UNQUOTED(LIRC_IRQ, $irq)
-fi
 if test "$irtty" != ""; then
   AC_DEFINE_UNQUOTED(LIRC_IRTTY, "$irtty")
 fi
