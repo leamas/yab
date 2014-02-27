@@ -33,7 +33,7 @@ endif
 
 ## !!! BIG WARNING: this needs to be tweaked a bit more !!! ##
 
-DISTCHECK_FLAGS = --with-driver=userspace --enable-sandboxed --sysconfdir=/tmp/etc
+DISTCHECK_FLAGS = --enable-sandboxed --sysconfdir=/tmp/etc
 DISTCHECK_CONFIGURE_FLAGS = ${DISTCHECK_FLAGS}
 DISTCHECK_LIGHT_FLAGS = --with-driver=none --enable-sandboxed
 
