@@ -107,6 +107,9 @@ struct hardware hw_slinke = {
 	"slinke"
 };
 
+struct hardware* hardwares[] = { &hw_slinke, (struct hardware*)NULL };
+
+
 /*****************************************************************************/
 /* Slink-e constants */
 

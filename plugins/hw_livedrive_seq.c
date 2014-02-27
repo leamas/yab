@@ -80,3 +80,6 @@ struct hardware hw_livedrive_seq = {
 	NULL,
 	"livedrive_seq"
 };
+
+struct hardware* hardwares[] = { &hw_livedrive_seq, (struct hardware*)NULL };
+
