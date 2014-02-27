@@ -1,0 +1,16 @@
+plugins README
+==============
+
+This directory contains all userspace drivers. Adding a new one
+is not that hard.
+
+If you dont need any specific compilation or link flags, just drop
+a .c file here and run ./make-pluginlist > pluginlist.am. After that
+is ust to do the usual autoconf; automake; ./configure.
+
+If you need specific flags you must add your new file to Makefile.am
+There is an example in hw_atwf83.c.
+
+If you need to test for certain headers, libraries etc. you need to
+create an AM_CONDITIONAL in configure.ac and refer to it in
+Makefile.am. There are plenty of examples.

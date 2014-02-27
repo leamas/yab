@@ -130,44 +130,14 @@ AC_MSG_RESULT()
 
 # this list must only contain userspace drivers without external
 # (header/library) dependencies!
-possible_drivers="(none) \
-	(userspace) \
-	(accent) \
-	(atwf83) \
-	(bte) \
-	(creative) \
-	(ea65) \
-	(exaudio) \
-	(irlink) \
-	(irreal) \
-	(livedrive_midi) \
-	(livedrive_seq) \
-	(logitech) \
-	(mediafocusI) \
-	(mouseremote) \
-	(mouseremote_ps2) \
-	(mp3anywhere) \
-	(mplay) \
-	(pcmak) \
-	(pcmak_usb) \
-	(pctv) \
-	(remotemaster) \
-	(silitek) \
-	(slinke) \
-	(tira) \
-	(tira_raw) \
-	(uirt2) \
-	(uirt2_raw) \
-	(usb_uirt_raw) \
-	(usbx) \
-	(udp)"
+possible_drivers=$(for f in $( ls plugins/*.c); do
+                      f=$(basename $f);
+                      f=${f#hw_}; f=${f%.c}; echo -n "($f) ";
+                   done)
+possible_drivers="(lirc_dev lirc_wpc8769l) $possible_drivers"
+possible_drivers="(none) (userspace) (all) $possible_drivers"
+all_drivers="$possible_drivers"
 
-if test x${no_kernel} != xyes; then
-  possible_drivers="${possible_drivers} \
-	(all) \
-	(lirc_dev) \
-	(lirc_dev lirc_wpc8769l)"
-fi
 
 AH_TEMPLATE([DAEMONIZE],
 	[Define to run daemons as daemons])
@@ -217,12 +187,6 @@ AH_TEMPLATE([HAVE_VSYSLOG],
 AH_TEMPLATE([HW_DEFAULT],
 	[The name of the hw_* structure to use by default])
 
-AH_TEMPLATE([LIRC_DRIVER],
-	[Text string signifying which driver is configured])
-
-AH_TEMPLATE([LIRC_DRIVER_ANY],
-	[Define to include most drivers])
-
 AH_TEMPLATE([LIRC_HAVE_DEVFS],
 	[Define if devfs support is present in current kernel])
 
@@ -252,45 +216,53 @@ AH_TEMPLATE([USE_SYSLOG],
 
 
 AC_CHECK_LIB(caraca_client, caraca_init,[
-    AM_CONDITIONAL([BUILD_CARACA],[true])
-  possible_drivers="${possible_drivers} (caraca)"],[
-    AM_CONDITIONAL([BUILD_CARACA],[false])]
+  AM_CONDITIONAL([BUILD_CARACA],[true])
+  ],[
+  possible_drivers="${possible_drivers/(caraca)/}"
+  AM_CONDITIONAL([BUILD_CARACA],[false])]
 )
 AC_CHECK_HEADER(usb.h,[
   AC_DEFINE(HAVE_LIBUSB)
   AM_CONDITIONAL([BUILD_USB],[true])
-  possible_drivers="${possible_drivers} (atilibusb) (awlibusb) (dfclibusb) (commandir) (srm7500libusb)"],[
-  AM_CONDITIONAL([BUILD_USB],[false])]
+  AM_CONDITIONAL([BUILD_USB],[false])
+  ],[
+  possible_drivers="${possible_drivers/(atilibusb)/}"
+  possible_drivers="${possible_drivers/(awlibusb)/}"
+  possible_drivers="${possible_drivers/(dfclibusb)/}"
+  possible_drivers="${possible_drivers/(commandir)/}"
+  possible_drivers="${possible_drivers/(srm7500libusb)/}"]
 )
 AC_CHECK_HEADER(ftdi.h,[
   AM_CONDITIONAL([BUILD_FTDI],[true])
-  possible_drivers="${possible_drivers} (ftdi)"],[
+  possible_drivers="${possible_drivers} (ftdi)"
+  ],[
   AM_CONDITIONAL([BUILD_FTDI],[false])]
 )
 AC_CHECK_HEADER(iguanaIR.h,[
   AM_CONDITIONAL([BUILD_IGUANAIR],[true])
-  possible_drivers="${possible_drivers} (iguanaIR)"],[
+  ],[
+  possible_drivers="${possible_drivers/(iguanaIR)/}"
   AM_CONDITIONAL([BUILD_IGUANAIR],[false])]
 )
 AC_CHECK_LIB(irman, ir_strerror,[
   AM_CONDITIONAL([BUILD_LIBIRMAN],[true])
-  possible_drivers="${possible_drivers} (irman)"
   ],[
+  possible_drivers="${possible_drivers/(irman)/}"
   AM_CONDITIONAL([BUILD_LIBIRMAN],[false])]
 )
 AC_CHECK_LIB(irman_sw, ir_strerror,[
   AM_CONDITIONAL([BUILD_LIBIRMAN_SW],[true])
-  possible_drivers="${possible_drivers} (irman_sw)"
   ],[
+  possible_drivers="${possible_drivers/(irman_sw)/}"
   AM_CONDITIONAL([BUILD_LIBIRMAN_SW],[false])]
 )
 dnl audio driver requires PortAudio library installed and some linker flags
 AC_CHECK_HEADERS(portaudio.h,[
   AC_CHECK_LIB(portaudio, Pa_Initialize,[
     AM_CONDITIONAL([BUILD_LIBPORTAUDIO],[true])
-    possible_drivers="${possible_drivers} (audio)"
     ],[
     AM_CONDITIONAL([BUILD_LIBPORTAUDIO],[false])
+    possible_drivers="${possible_drivers/(audio)/}"
     ],[
     ${portaudio_lib_other}]
   )]
@@ -302,8 +274,8 @@ AC_CHECK_HEADERS(alsa/asoundlib.h,[
     AM_CONDITIONAL([BUILD_LIBALSA],[true])
     AC_DEFINE(HAVE_LIBALSA)
     have_alsa=yes
-    possible_drivers="${possible_drivers} (audio_alsa)"
     ],[
+    possible_drivers="${possible_drivers/(audio_alsa)/}"
     AM_CONDITIONAL([BUILD_LIBALSA],[false])],
   )]
 )
@@ -318,8 +290,8 @@ if test "$have_alsa" = "yes"; then
     AC_MSG_RESULT(yes)
     AC_DEFINE(HAVE_ALSA_SB_RC)
     AM_CONDITIONAL([BUILD_ALSA_SB_RC],[true])
-    possible_drivers="${possible_drivers} (alsa_usb)"
     ],[
+    possible_drivers="${possible_drivers/(alsa_usb)/}"
     AC_MSG_RESULT(no)
     AM_CONDITIONAL([BUILD_ALSA_SB_RC],[false])
   ])
@@ -327,20 +299,19 @@ fi
 dnl creative_infracd driver requires linux scsi api
 AC_CHECK_HEADERS(scsi/sg.h,[
   AC_DEFINE(HAVE_SCSI)
-  possible_drivers="${possible_drivers} (creative_infracd)"
-  ]
+  ],[
+  possible_drivers="${possible_drivers/(creative_infracd)/}"]
 )
 dnl dev_input driver requires linux input device api
 dnl for now, always build this plugin.
 AC_CHECK_HEADERS(linux/input.h,[
   AC_DEFINE(HAVE_LINUX_DEVINPUT)
-  possible_drivers="${possible_drivers} (devinput)"
-  ]
+  ],[
+  possible_drivers="${possible_drivers/(devinput)/}"]
 )
 dnl check if hiddev is available
 AC_CHECK_HEADERS([linux/types.h])
 AC_CHECK_HEADERS([linux/hiddev.h],[
-  possible_drivers="${possible_drivers} (asusdh) (bw6130) (dvico) (macmini)"
   AC_MSG_CHECKING(for HIDDEV_FLAG_UREF support)
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <linux/types.h>
@@ -351,12 +322,18 @@ AC_CHECK_HEADERS([linux/hiddev.h],[
     AC_MSG_RESULT(yes)
     AC_DEFINE(HAVE_LINUX_HIDDEV_FLAG_UREF)
     AM_CONDITIONAL([BUILD_HIDDEV],[true])
-    possible_drivers="${possible_drivers} (samsung) (sb0540)"
     ],[
     AC_MSG_RESULT(no)
     AM_CONDITIONAL([BUILD_HIDDEV],[false])
+    possible_drivers="${possible_drivers/(samsung)/}"
+    possible_drivers="${possible_drivers}/(sb0540)/}"
     ])
-  ], [],
+  ],[
+  possible_drivers="${possible_drivers/(asusdh)/}"
+  possible_drivers="${possible_drivers/(bw6130)/}"
+  possible_drivers="${possible_drivers/(dvico)/}"
+  possible_drivers="${possible_drivers/(macmini)/}"
+  ],
 [#ifdef HAVE_LINUX_TYPES_H
 #include <linux/types.h>
 #endif
@@ -367,15 +344,15 @@ dnl dsp driver requires linux soundcard api
 AC_CHECK_HEADERS(sys/soundcard.h,[
   AM_CONDITIONAL([BUILD_DSP],[true])
   AC_DEFINE(HAVE_SOUNDCARD)
-  possible_drivers="${possible_drivers} (dsp)"
   ],[
+  possible_drivers="${possible_drivers/(dsp/})"
   AM_CONDITIONAL([BUILD_DSP],[false])]
 )
 dnl i2cuser driver requires the Linux I2C API
 AC_CHECK_HEADERS(linux/i2c-dev.h,[
   AM_CONDITIONAL([BUILD_I2CUSER],[true])
-  possible_drivers="${possible_drivers} (i2cuser)"
   ],[
+  possible_drivers="${possible_drivers/(i2cuser)/}"
   AM_CONDITIONAL([BUILD_I2CUSER],[false])]
 )
 
@@ -386,71 +363,6 @@ LIBS="$LIBS $SYSTEMD_LIBS"
 AC_CHECK_FILE([/usr/lib/systemd/system], [has_systemd_system=true],[true])
 AM_CONDITIONAL([SYSTEMD_INSTALL],[test x"$has_systemd_system" = xtrue])
 
-dnl here we see what driver the user wants.
-
-AC_ARG_WITH(driver,
-[  --with-driver=X         specify the driver to use, where X is one of:
-                          all, none, userspace, accent, act200l,
-                          act220l, adaptec, alsa_usb, animax, asusdh,
-                          atilibusb, atwf83, audio, audio_alsa
-                          avermedia, avermedia_vdomate, avermedia98,
-                          awlibusb, bestbuy, bestbuy2, breakoutbox,
-                          bte, bw6130, caraca, chronos, commandir,
-                          comX, cph06x, creative, creative_infracd,
-                          devinput, dfclibusb, digimatrix, dsp, dvico, ea65,
-                          exaudio, flyvideo, ftdi, gvbctv5pci,
-                          hauppauge, hauppauge_dvb,
-                          hercules_smarttv_stereo, i2cuser,
-                          iguanaIR, imon_24g,
-                          imon_knob, imon_lcd, imon_pad, imon_rsc,
-                          irdeo, irdeo_remote, irlink, irman, irman_sw, irreal,
-                          knc_one, kworld,
-                          leadtek_0007, leadtek_0010, leadtek_pvr2000,
-                          livedrive_midi, livedrive_seq, logitech,
-                          lptX, macmini, mediafocusI,
-                          mouseremote, mouseremote_ps2, mp3anywhere,
-                          mplay, nslu2,packard_bell, pcmak,
-                          pcmak_usb, pctv, pixelview_bt878,
-                          pixelview_pak, pixelview_pro, provideo,
-                          realmagic, remotemaster, sa1100, samsung,
-                          sb0540, silitek, slinke,
-                          srm7500libusb, tekram,
-                          tira, tira_raw,
-                          tuxbox, tvbox, udp, uirt2, uirt2_raw,
-                          usb_uirt_raw, usbx, wpc8769l],
-driver=${withval},
-driver="unset"
-)
-
-#START HARDWARE HEURISTIC
-lirc_driver="$driver"
-lircd_conf=""
-lircmd_conf=""
-iguanaIR_lib=""
-irman_lib=""
-ftdi_lib=""
-caraca_lib=""
-commandir_lib=""
-portaudio_lib=""
-alsa_lib=""
-atilibusb_lib=""
-atwf83_lib=""
-awlibusb_lib=""
-dfclibusb_lib=""
-srm7500libusb_lib=""
-HW_DEFAULT="hw_default"
-kernel_module=""
-
-if test "$driver" = "none"; then
-  lirc_driver=none
-  HW_DEFAULT="hw_null"
-fi
-
-if test "$driver" = "userspace" -o "$driver" = "all"; then
-  AC_DEFINE(LIRC_DRIVER_ANY)
-  lirc_driver=$driver
-
-fi
 LIBUSB_LIBS=''
 LIBUSB_CFLAGS=''
 if test -n "${LIBUSB_CONFIG}"; then
@@ -460,558 +372,27 @@ fi
 AC_SUBST(LIBUSB_LIBS)
 AC_SUBST(LIBUSB_CFLAGS)
 
-if test "$driver" = "accent"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_accent"
-  lircd_conf="kanam_accent/lircd.conf.IR-100"
-fi
-
-if test "$driver" = "act200l"; then
-  lirc_driver="lirc_dev"
-fi
-
-if test "$driver" = "act220l"; then
-  lirc_driver="lirc_dev"
-fi
-
-if test "$driver" = "adaptec"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="adaptec/lircd.conf.AVC-2410"
-#  lircmd_conf="adaptec/lircmd.conf.AVC-2410"
-fi
-
-if test "$driver" = "alsa_usb"; then
-  lirc_driver="alsa_usb"
-  HW_DEFAULT="hw_alsa_usb"
-  alsa_lib=-lasound
-  lircd_conf="creative/lircd.conf.alsa_usb"
-fi
-
-if test "$driver" = "animax"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="animax/lircd.conf.animax"
-  lircmd_conf="animax/lircmd.conf.animax"
-fi
-
-if test "$driver" = "asusdh"; then
-  lirc_driver="hiddev"
-  HW_DEFAULT="hw_asusdh"
-  lircd_conf="asus/lircd.conf.asusdh"
-fi
-
-if test "$driver" = "atilibusb"; then
-  lirc_driver="$driver"
-  HW_DEFAULT="hw_atilibusb"
-  lircd_conf="atiusb/lircd.conf.atilibusb"
-fi
-
-if test "$driver" = "atwf83"; then
-  lirc_driver="$driver"
-  HW_DEFAULT="hw_atwf83"
-  lircd_conf="aureal/lircd.conf.atwf83"
-  atwf83_lib=-lpthread
-fi
-
-if test "$driver" = "awlibusb"; then
-  lirc_driver="$driver"
-  HW_DEFAULT="hw_awlibusb"
-  lircd_conf="awlibusb/lircd.conf.awlibusb"
-fi
-
-if test "$driver" = "audio"; then
-  lirc_driver="audio"
-  HW_DEFAULT="hw_audio"
-  portaudio_lib="-lportaudio ${portaudio_lib_other}"
-fi
-
-if test "$driver" = "audio_alsa"; then
-  lirc_driver="audio_alsa"
-  HW_DEFAULT="hw_audio_alsa"
-  alsa_lib=-lasound
-fi
-
-if test "$driver" = "avermedia"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="avermedia/lircd.conf.avermedia"
-  lircmd_conf="avermedia/lircmd.conf.avermedia"
-fi
-
-if test "$driver" = "avermedia98"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="avermedia/lircd.conf.avermedia98"
-  lircmd_conf="avermedia/lircmd.conf.avermedia98"
-fi
-
-if test "$driver" = "avermedia_vdomate"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="avermedia/lircd.conf.vdomate"
-#  lircmd_conf="avermedia/lircmd.conf.vdomate"
-fi
-
-if test "$driver" = "bestbuy"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="bestbuy/lircd.conf.bestbuy"
-  lircmd_conf="bestbuy/lircmd.conf.bestbuy"
-fi
-
-if test "$driver" = "bestbuy2"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="bestbuy/lircd.conf.bestbuy2"
-  lircmd_conf="bestbuy/lircmd.conf.bestbuy2"
-fi
-
-if test "$driver" = "breakoutbox"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="creative/lircd.conf.breakoutbox"
-fi
-
-if test "$driver" = "bte"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_bte"
-  lircd_conf="ericsson/lircd.conf.bte"
-#  lircmd_conf="ericsson/lircmd.conf.bte"
-fi
-
-if test "$driver" = "bw6130"; then
-  lirc_driver="$driver"
-  HW_DEFAULT="hw_bw6130"
-  lircd_conf="remotec/lircd.conf.BW6130"
-  lircmd_conf="remotec/lircmd.conf.BW6130"
-fi
-
-if test "$driver" = "caraca"; then
-  lirc_driver="caraca"
-  HW_DEFAULT="hw_caraca"
-  caraca_lib=-lcaraca_client
-  lircd_conf="caraca/lircd.conf.caraca"
-#  lircmd_conf="caraca/lircmd.conf.caraca"
-fi
-
-if test "$driver" = "chronos"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="chronos/lircd.conf.chronos"
-#  lircmd_conf="chronos/lircmd.conf.chronos"
-fi
-
-if test "$driver" = "commandir"; then
-  lirc_driver="$driver"
-  HW_DEFAULT="hw_commandir"
-  lircd_conf="hauppauge/lircd.conf.hauppauge"
-  lircmd_conf="hauppauge/lircmd.conf.hauppauge"
-fi
-
-if test "$driver" = "cph03x" -o "$driver" = "cph06x"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="cph03x/lircd.conf.cph03x"
-#  lircmd_conf="cph03x/lircmd.conf.cph03x"
-fi
-
-if test "$driver" = "creative"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_creative"
-  lircd_conf="creative/lircd.conf.creative"
-#  lircmd_conf="creative/lircmd.conf.creative"
-fi
-
-if test "$driver" = "creative_infracd"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_creative_infracd"
-  lircd_conf="creative/lircd.conf.infracd"
-fi
-
-if test "$driver" = "devinput"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_devinput"
-  lircd_conf="devinput/lircd.conf.devinput"
-fi
-
-if test "$driver" = "dfclibusb"; then
-  lirc_driver="$driver"
-  HW_DEFAULT="hw_dfclibusb"
-fi
-
-if test "$driver" = "dsp"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_dsp"
-fi
-
-if test "$driver" = "dvico"; then
-  lirc_driver="$driver"
-  HW_DEFAULT="hw_dvico"
-  lircd_conf="dvico/lircd.conf.fusionHDTV"
-fi
-
-if test "$driver" = "ea65"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_ea65"
-  lircd_conf="ea65/lircd.conf.ea65"
-fi
-
-if test "$driver" = "exaudio"; then
-  lirc_driver="none"
-#  lircd_conf="creative/lircd.conf.exaudio"
-#  lircmd_conf="creative/lircmd.conf.exaudio"
-fi
-
-if test "$driver" = "flyvideo"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="life-view/lircd.conf.flyvideo"
-  lircmd_conf="life-view/lircmd.conf.flyvideo"
-fi
-
-if test "$driver" = "ftdi"; then
-  lirc_driver="ftdi"
-  HW_DEFAULT="hw_ftdi"
-  ftdi_lib="-lftdi"
-fi
-
-if test "$driver" = "gvbctv5pci"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="iodata/lircd.conf.gvbctv5pci"
-#  lircmd_conf="iodata/lircmd.conf.gvbctv5pci"
-fi
-
-if test "$driver" = "hauppauge"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="hauppauge/lircd.conf.hauppauge"
-  lircmd_conf="hauppauge/lircmd.conf.hauppauge"
-fi
-
-if test "$driver" = "hauppauge_dvb"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="hauppauge/lircd.conf.hauppauge"
-  lircmd_conf="hauppauge/lircmd.conf.hauppauge"
-fi
-
-if test "$driver" = "hercules_smarttv_stereo"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="hercules/lircd.conf.smarttv_stereo"
-fi
-
-if test "$driver" = "i2cuser"; then
-  lirc_driver="i2cuser"
-  HW_DEFAULT="hw_i2cuser"
-fi
-
-if test "$driver" = "iguanaIR"; then
-  lirc_driver="iguanaIR"
-  HW_DEFAULT="hw_iguanaIR"
-  iguanaIR_lib=-liguanaIR
-fi
-
-if test "$driver" = "imon_24g"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="imon/lircd.conf.imon-2.4g"
-fi
-
-if test "$driver" = "imon_knob"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="imon/lircd.conf.imon-knob"
-fi
-
-if test "$driver" = "imon_lcd"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="imon/lircd.conf.imon"
-  AC_DEFINE(LIRC_IMON_LCD)
-fi
-
-if test "$driver" = "imon_pad"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="imon/lircd.conf.imon-pad"
-fi
-
-if test "$driver" = "imon_rsc"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="imon/lircd.conf.imon-rsc"
-fi
-
-if test "$driver" = "irdeo"; then
-  lirc_driver="lirc_dev"
-fi
-
-if test "$driver" = "irdeo_remote"; then
-  lirc_driver="lirc_dev"
-fi
-
-if test "$driver" = "irlink"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_irlink"
-fi
-
-if test "$driver" = "irman"; then
-  lirc_driver="irman"
-  HW_DEFAULT="hw_irman"
-fi
-
-if test "$driver" = "irman_sw"; then
-  lirc_driver="irman_sw"
-  HW_DEFAULT="hw_irman"
-fi
-
-if test "$driver" = "irreal"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_irreal"
-fi
-
-if test "$driver" = "knc_one"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="knc_one/lircd.conf.knc_one"
-#  lircmd_conf="knc_one/lircmd.conf.knc_one"
-fi
-
-if test "$driver" = "kworld"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="kworld/lircd.conf.kworld"
-#  lircmd_conf="kworld/lircmd.conf.kworld"
-fi
-
-if test "$driver" = "leadtek_0007"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="leadtek/lircd.conf.RM-0007"
-  lircmd_conf="leadtek/lircmd.conf.RM-0007"
-fi
-
-if test "$driver" = "leadtek_0010"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="leadtek/lircd.conf.RM-0010"
-  lircmd_conf="leadtek/lircmd.conf.RM-0010"
-fi
-
-if test "$driver" = "leadtek_pvr2000"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="leadtek/lircd.conf.PVR2000"
-#  lircmd_conf="leadtek/lircmd.conf.PVR2000"
-fi
-
-if test "$driver" = "livedrive_midi"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_livedrive_midi"
-  lircd_conf="creative/lircd.conf.livedrive"
-#  lircmd_conf="creative/lircmd.conf.livedrive"
-fi
-
-if test "$driver" = "livedrive_seq"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_livedrive_seq"
-  lircd_conf="creative/lircd.conf.livedrive"
-#  lircmd_conf="creative/lircmd.conf.livedrive"
-fi
-
-if test "$driver" = "logitech"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_logitech"
-  lircd_conf="logitech/lircd.conf.logitech"
-  lircmd_conf="logitech/lircmd.conf.logitech"
-fi
-
-if test "$driver" = "lpt1"; then
-  lirc_driver="lirc_dev"
-  port=0x378
-  irq=7
-fi
-
-if test "$driver" = "lpt2"; then
-  lirc_driver="lirc_dev"
-  port=0x278
-  irq=5
-fi
-
-if test "$driver" = "macmini"; then
-  lirc_driver="$driver"
-  HW_DEFAULT="hw_macmini"
-  lircd_conf="apple/lircd.conf.macmini"
-fi
-
-if test "$driver" = "mediafocusI"; then
-  lirc_driver="none"
-  lircd_conf="technisat/lircd.conf.mediafocusI"
-#  lircmd_conf="technisat/lircmd.conf.mediafocusI"
-fi
-
-if test "$driver" = "mouseremote"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_mouseremote"
-  lircd_conf="x10/lircd.conf.mouseremote"
-  lircmd_conf="x10/lircmd.conf.mouseremote"
-fi
-
-if test "$driver" = "mouseremote_ps2"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_mouseremote_ps2"
-  lircd_conf="x10/lircd.conf.mouseremote"
-  lircmd_conf="x10/lircmd.conf.mouseremote"
-fi
-
-if test "$driver" = "mp3anywhere"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_mp3anywhere"
-  lircd_conf="x10/lircd.conf.mp3anywhere"
-fi
-
-if test "$driver" = "mplay"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_mplay"
-  lircd_conf="vlsystem/lircd.conf.mplay"
-fi
-
-if test "$driver" = "mplay2"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_mplay2"
-  lircd_conf="vlsystem/lircd.conf.mplay"
-fi
-
-if test "$driver" = "nslu2"; then
-  lirc_driver="lirc_dev"
-fi
-
-if test "$driver" = "packard_bell"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="packard_bell/lircd.conf.packard_bell"
-fi
-
-if test "$driver" = "pcmak" -o "$driver" = "pcmak_usb"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_pcmak"
-  lircd_conf="pcmak/lircd.conf.pcmak"
-  lircmd_conf="pcmak/lircmd.conf.pcmak"
-fi
-
-if test "$driver" = "pctv"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_pinsys"
-  lircd_conf="pinnacle_systems/lircd.conf.pctv"
-#  lircmd_conf="pinnacle_systems/lircmd.conf.pctv"
-fi
-
-if test "$driver" = "pixelview_bt878"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="pixelview/lircd.conf.playtv_bt878"
-#  lircmd_conf="pixelview/lircmd.conf.pixelview_bt878"
-fi
-
-if test "$driver" = "pixelview_pak"; then
-  lirc_driver="lirc_dev"
-# the config files are the same as for the PlayTV pro
-  lircd_conf="pixelview/lircd.conf.playtv_pro"
-  lircmd_conf="pixelview/lircmd.conf.playtv_pro"
-fi
-
-if test "$driver" = "pixelview_pro"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="pixelview/lircd.conf.playtv_pro"
-  lircmd_conf="pixelview/lircmd.conf.playtv_pro"
-fi
-
-if test "$driver" = "provideo"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="provideo/lircd.conf.pv951"
-#  lircmd_conf="provideo/lircmd.conf.pv951"
-fi
-
-if test "$driver" = "realmagic"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_pixelview"
-  lircd_conf="sigma_designs/lircd.conf.realmagic"
-#  lircmd_conf="sigma_designs/lircmd.conf.realmagic"
-fi
-
-if test "$driver" = "remotemaster"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_pixelview"
-  lircd_conf="pixelview/lircd.conf.remotemaster"
-  lircmd_conf="pixelview/lircmd.conf.remotemaster"
-fi
-
-if test "$driver" = "sa1100"; then
-  lirc_driver="lirc_dev"
-  AC_DEFINE(LIRC_ON_SA1100)
-fi
-
-if test "$driver" = "samsung"; then
-  lirc_driver="hiddev"
-  HW_DEFAULT="hw_samsung"
-  lircd_conf="samsung/lircd.conf.samsung"
-fi
-
-if test "$driver" = "sb0540"; then
-  lirc_driver="hiddev"
-  HW_DEFAULT="hw_sb0540"
-# original RM-1500 is included here
-  lircd_conf="creative/lircd.conf.alsa_usb"
-fi
-
-if test "$driver" = "silitek"; then
-  lirc_driver="silitek"
-  HW_DEFAULT="hw_silitek"
-  lircd_conf="silitek/lircd.conf.silitek"
-  lircmd_conf="silitek/lircmd.conf.silitek"
-fi
-
-if test "$driver" = "slinke"; then
-  echo
-  echo "Please use lirc-0.6.5. The Slink-e is no longer supported."
-  echo
-  exit 1
-  lirc_driver="none"
-  HW_DEFAULT="hw_slinke"
-fi
-
-if test "$driver" = "srm7500libusb"; then
-  lirc_driver="$driver"
-  HW_DEFAULT="hw_srm7500libusb"
-  lircd_conf="philips/lircd.conf.srm7500libusb"
-fi
-
-if test "$driver" = "tekram"; then
-  lirc_driver="lirc_dev"
-fi
-
-if test "$driver" = "tira"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_tira"
-fi
-
-if test "$driver" = "tira_raw"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_tira_raw"
-fi
-
-if test "$driver" = "tuxbox"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_default"
-fi
-
-if test "$driver" = "tvbox"; then
-  lirc_driver="lirc_dev"
-  lircd_conf="asus/lircd.conf.asus"
-fi
-
-if test "$driver" = "udp"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_udp"
-fi
-
-if test "$driver" = "uirt2"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_uirt2"
-fi
-if test "$driver" = "uirt2_raw"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_uirt2_raw"
-fi
-if test "$driver" = "usb_uirt_raw"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_usb_uirt_raw"
-fi
-if test "$driver" = "usbx"; then
-  lirc_driver="none"
-  HW_DEFAULT="hw_usbx"
-  lircd_conf="adstech/lircd.conf.usbx-707"
-fi
-
-if test "$driver" = "wpc8769l"; then
-  lirc_driver="lirc_dev lirc_wpc8769l"
-  lircd_conf="acer/lircd.conf.Aspire_6530G"
+dnl here we see what driver the user wants.
+
+AC_ARG_WITH(driver,
+[  --with-driver=X        Specify the driver to use, where X is one of:
+                          all, none, userspace, wpc8769l],
+driver=${withval},
+driver="unset"
+)
+
+#START HARDWARE HEURISTIC
+## FIXME: driver table generation is busted.
+lirc_driver="$driver"
+kernel_module=""
+
+if test "$driver" = "none"; then
+  lirc_driver=none
+  HW_DEFAULT="hw_null"
+fi
+
+if test "$driver" = "userspace" -o "$driver" = "all"; then
+  lirc_driver=$driver
 fi
 
 
@@ -1022,60 +403,24 @@ AC_DEFINE_UNQUOTED(HW_DEFAULT, ${HW_DEFAULT})
 dnl now check to see if the user is behaving himself
 
 if test "$lirc_driver" = "unset"; then
-  AC_MSG_ERROR([no driver specified, try ./configure --help])
+  AC_MSG_NOTICE([No driver specified, configuring all possible userspace ones.])
+  lirc_driver='userspace'
+  for d in $( echo $all_drivers ); do
+    echo "$possible_drivers"  | grep  -q "$d" || unconfigured="$unconfigured $d"
+  done
+  if test -n "$unconfigured" ; then
+    unconfigured=$( echo $unconfigured | tr -d '()' )
+    AC_MSG_NOTICE([Unconfigured drivers: $unconfigured.])
+  fi
 fi
 
 if echo ${possible_drivers} | grep "($lirc_driver)" >/dev/null 2>&1; then
   dummy=
 else
   case $lirc_driver in
-  ftdi*)
-    AC_MSG_ERROR([*** you need to first install the libftdi package
-	before you can use this driver])
-    ;;
-  irman*)
-    AC_MSG_ERROR([*** you need to first install the libirman package
-	(libirman-0.4.2 or better) before you can use this driver])
-    ;;
-  caraca*)
-    AC_MSG_ERROR([*** you need to first install the caraca package
-	before you can use this driver])
-    ;;
   all|lirc_*)
     AC_MSG_ERROR([*** you need to have the Linux kernel source installed
 	for this driver])
-    ;;
-  atilibusb|awlibusb|commandir|dfclibusb|srm7500libusb)
-    AC_MSG_ERROR([*** you need to have libusb installed for this driver.
-
-Get it at:
-
-  http://libusb.sourceforge.net/
-
-Or install these packages from your distro:
-
-   libusb
-   libusb-devel
-
-])
-    ;;
-  audio)
-    AC_MSG_ERROR([*** you need to have the PortAudio library V19 installed
-to use the audio driver. You can get it at:
-  http://www.portaudio.com/
-])
-    ;;
-  audio_alsa)
-    AC_MSG_ERROR([*** you need to have the ALSA headers and libraries
-	for this driver])
-    ;;
-  alsa_usb)
-    AC_MSG_ERROR([*** you need to have the ALSA libraries and drivers
-	from at least version 1.0.9 for this driver])
-    ;;
-  iguanaIR)
-    AC_MSG_ERROR([*** you need to have the iguanaIR headers and
-        libraries for this driver])
     ;;
   *)
     AC_MSG_ERROR([*** it is not possible to install the specified driver
@@ -1086,31 +431,10 @@ fi
 
 dnl now we've checked, we can rename things for the drivers/Makefile
 
-if test "$lirc_driver" = "none" || \
-	test "$lirc_driver" = "alsa_usb" || \
-	test "$lirc_driver" = "asusdh" || \
-	test "$lirc_driver" = "atilibusb" || \
-	test "$lirc_driver" = "atwf83" || \
-	test "$lirc_driver" = "audio" || \
-	test "$lirc_driver" = "audio_alsa" || \
-	test "$lirc_driver" = "awlibusb" || \
-	test "$lirc_driver" = "bw6130" || \
-	test "$lirc_driver" = "caraca" || \
-	test "$lirc_driver" = "commandir" || \
-	test "$lirc_driver" = "dfclibusb" || \
-	test "$lirc_driver" = "dvico" || \
-	test "$lirc_driver" = "iguanaIR" || \
-	test "$lirc_driver" = "irman" || \
-	test "$lirc_driver" = "irman_sw" || \
-	test "$lirc_driver" = "macmini" || \
-	test "$lirc_driver" = "samsung" || \
-	test "$lirc_driver" = "sb0540" || \
-	test "$lirc_driver" = "srm7500libusb" || \
-	test "$lirc_driver" = "userspace"; then
+if test "$lirc_driver" = "none" || test "$lirc_driver" = "userspace"; then
   lirc_driver=
 elif test "$lirc_driver" = "all"; then
-  lirc_driver="_dev \
-	lirc_wpc8769l"
+  lirc_driver="lirc_dev  lirc_wpc8769l"
 fi
 if kernel_module=$(expr "$lirc_driver" : 'lirc_dev \(.*\)'); then
   :
@@ -1254,7 +578,6 @@ AC_DEFINE_UNQUOTED([VARRUNDIR], "$varrundir_exp", [/var/run])
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 
-AC_DEFINE_UNQUOTED(LIRC_DRIVER, "$driver")
 if test "$irtty" != ""; then
   AC_DEFINE_UNQUOTED(LIRC_IRTTY, "$irtty")
 fi
