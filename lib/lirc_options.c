@@ -1,5 +1,3 @@
-/*      $Id: release.c,v 1.8 2010/04/17 13:39:29 lirc Exp $      */
-
 /****************************************************************************
  ** lirc_options.c **********************************************************
  ****************************************************************************
@@ -55,6 +53,7 @@ static const struct option long_options[] = {
 	{"connect", required_argument, NULL, 'c'},
 	{"output", required_argument, NULL, 'o'},
 	{"pidfile", required_argument, NULL, 'P'},
+	{"plugindir", required_argument, NULL, 'U'},
 #       ifndef USE_SYSLOG
 	{"logfile", required_argument, NULL, 'L'},
 #       endif
@@ -84,6 +83,7 @@ static void help(void)
 	printf("\t -c --connect=host[:port]\tconnect to remote lircd server\n");
 	printf("\t -o --output=socket\t\toutput socket filename\n");
 	printf("\t -P --pidfile=file\t\tdaemon pid file\n");
+	printf("\t -U --plugindir=directory\tdriver directory\n");
 #       ifndef USE_SYSLOG
 	printf("\t -L --logfile=file\t\tdaemon log file\n");
 #       endif
@@ -117,6 +117,7 @@ static void add_defaults(void)
                 "lircd:output", 	LIRCD,
                 "lircd:pidfile", 	PIDFILE,
                 "lircd:logfile", 	LOGFILE,
+                "lircd:plugindir", 	PLUGINDIR,
 		"lircd:debug", 		"False",
 		"lircd:release", 	NULL,
 		"lircd:allow_simulate", "False",
@@ -155,7 +156,7 @@ static void load_config(int argc, char** argv, char* path)
 static void parse_options(int argc, char** argv)
 {
 	int c;
-	const char* optstring =  "hvnp:H:d:o:P:l::c:r::aR:"
+	const char* optstring =  "hvnp:H:d:o:P:U:l::c:r::aR:"
 #       if defined(__linux__)
 		"u"
 #       endif
@@ -195,13 +196,14 @@ static void parse_options(int argc, char** argv)
 		case 'P':
 			set_option("lircd:pidfile", optarg);
 			break;
-
-#                       ifndef USE_SYSLOG
+		case 'U':
+			set_option("lircd:plugindir", optarg);
+			break;
+#               ifndef USE_SYSLOG
 		case 'L':
 			set_option("lircd:logfile", optarg);
 			break;
-#                       endif
-
+#               endif
 		case 'o':
 			set_option("lircd:lircdfile", optarg);
 			break;

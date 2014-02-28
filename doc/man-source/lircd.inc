@@ -25,7 +25,7 @@ probably will change in future.
 If you're using the dev/input driver, you can use \fIname=STRING\fR or
 \fIphys=STRING\fR to select the device; lircd will look in /dev/input
 to find a device with a matching description. This is useful in case
-the device name isn't fixed. \fISTRING\fR may contain the '*' and '?' 
+the device name isn't fixed. \fISTRING\fR may contain the '*' and '?'
 wildcards and '\\' to mark them as literal.
 
 With the \-\-listen option you can let lircd listen for network
@@ -77,6 +77,10 @@ when sending a signal. The current default is 600. A SEND_START
 request will repeat the signal this many times. Also, if the number of
 repeats in a SEND_ONCE request exceeds this number, it will be
 replaced by this number.
+
+The --plugindir option sets the directory from which lircd loads it's
+userspace drivers. These are *.ko files, by default found in
+/usr/lib/lirc/plugins.
 
 [FILES]
 
