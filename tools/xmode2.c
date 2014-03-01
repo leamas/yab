@@ -60,10 +60,7 @@
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 
-#include "drivers/lirc.h"
-#include "daemons/ir_remote.h"
-#include "daemons/hardware.h"
-#include "daemons/hw-types.h"
+#include "lirc.h"
 
 Display *d1;
 Window w0, w1;			/*w0 = root */
@@ -94,83 +91,6 @@ char *hostname = "";
 int daemonized = 0;
 char *progname;
 
-void logprintf(int prio, char *format_str, ...)
-{
-	va_list ap;
-
-	if (lf) {
-		time_t current;
-		char *currents;
-
-		current = time(&current);
-		currents = ctime(&current);
-
-		fprintf(lf, "%15.15s %s %s: ", currents + 4, hostname, progname);
-		va_start(ap, format_str);
-		if (prio == LOG_WARNING)
-			fprintf(lf, "WARNING: ");
-		vfprintf(lf, format_str, ap);
-		fputc('\n', lf);
-		fflush(lf);
-		va_end(ap);
-	}
-	if (!daemonized) {
-		fprintf(stderr, "%s: ", progname);
-		va_start(ap, format_str);
-		if (prio == LOG_WARNING)
-			fprintf(stderr, "WARNING: ");
-		vfprintf(stderr, format_str, ap);
-		fputc('\n', stderr);
-		fflush(stderr);
-		va_end(ap);
-	}
-}
-
-void logperror(int prio, const char *s)
-{
-	if (s != NULL) {
-		logprintf(prio, "%s: %s", s, strerror(errno));
-	} else {
-		logprintf(prio, "%s", strerror(errno));
-	}
-}
-
-int waitfordata(unsigned long maxusec)
-{
-	fd_set fds;
-	int ret;
-	struct timeval tv;
-
-	while (1) {
-		FD_ZERO(&fds);
-		FD_SET(hw.fd, &fds);
-		do {
-			do {
-				if (maxusec > 0) {
-					tv.tv_sec = maxusec / 1000000;
-					tv.tv_usec = maxusec % 1000000;
-					ret = select(hw.fd + 1, &fds, NULL, NULL, &tv);
-					if (ret == 0)
-						return (0);
-				} else {
-					ret = select(hw.fd + 1, &fds, NULL, NULL, NULL);
-				}
-			}
-			while (ret == -1 && errno == EINTR);
-			if (ret == -1) {
-				logprintf(LOG_ERR, "select() failed\n");
-				logperror(LOG_ERR, NULL);
-				continue;
-			}
-		}
-		while (ret == -1);
-
-		if (FD_ISSET(hw.fd, &fds)) {
-			/* we will read later */
-			return (1);
-		}
-	}
-}
 
 void initscreen(char *geometry)
 {
