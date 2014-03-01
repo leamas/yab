@@ -7,7 +7,7 @@ ACLOCAL_AMFLAGS             = -I m4
 ## we need version 1.5 of automake for DIST_SUBDIRS to work and dist-bzip2.
 AUTOMAKE_OPTIONS = 1.5 check-news dist-bzip2
 
-EXTRA_DIST =  setup.sh setup-driver.sh setup.data data2setup.sh ANNOUNCE TODO
+EXTRA_DIST =   setup-driver.sh setup.data data2setup.sh ANNOUNCE TODO
 
 ## daemons/ and tools/ should appear before doc/ for help2man to work.
 if SYSTEMD_INSTALL
