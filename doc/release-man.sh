@@ -90,6 +90,7 @@ MAN2HTML=${BUILDDIR}/man2html
 
 for PROG in irpty irexec ircat irw mode2 smode2 xmode2 irsend irrecord lircd lircmd lircrcd irxevent
 do
+	test -z "`find .. -name $PROG `" && continue
 	PROG_PARAMS=""
 	PROG_PRE_PARAMS=""
 	select_vars $PROG

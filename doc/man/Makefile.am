@@ -1,9 +1,17 @@
 ## $Id: Makefile.am,v 1.7 2006/01/21 17:17:30 lirc Exp $
 
-## Process this file with automake to produce Makefile.in 
+## Process this file with automake to produce Makefile.in
 
-man_MANS= irexec.1 ircat.1 irpty.1 irrecord.1 irw.1 irxevent.1 \
-	lircd.8 lircmd.8 lircrcd.1 mode2.1 smode2.1 xmode2.1 irsend.1
+man_MANS= irexec.1 ircat.1 irpty.1 irrecord.1 irw.1 \
+	lircd.8 lircmd.8 lircrcd.1 mode2.1 irsend.1
+
+if BUILD_XTOOLS
+man_MANS += xmode2.1 irxevent.1
+endif
+
+if BUILD_SMODE2
+man_MANS += smode2.1
+endif
 
 EXTRA_DIST = $(man_MANS)
 
