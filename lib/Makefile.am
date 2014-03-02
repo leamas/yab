@@ -1,6 +1,8 @@
 ACLOCAL_AMFLAGS             = -I m4
 lib_LTLIBRARIES		    = liblirc.la
 liblirc_la_SOURCES          = config_file.c \
+			      ciniparser.c \
+			      dictionary.c \
                               dump_config.c \
                               hw-types.c \
 	                      input_map.c \
@@ -15,6 +17,8 @@ include_HEADERS             = lirc.h
 
 lirc_includedir             = /usr/include/lirc
 lirc_include_HEADERS        = config_file.h \
+			      ciniparser.h \
+			      dictionary.h \
                               dump_config.h \
                               hardware.h \
                               hw-types.h \

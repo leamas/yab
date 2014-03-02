@@ -168,6 +168,7 @@
 #define LIRC_SETUP_START               _IO('i', 0x00000021)
 #define LIRC_SETUP_END                 _IO('i', 0x00000022)
 
+#include "ciniparser.h"
 #include "hardware.h"
 #include "hw-types.h"
 #include "ir_remote.h"
