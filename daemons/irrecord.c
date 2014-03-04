@@ -143,6 +143,27 @@ struct ir_ncode *current_code = NULL;
 int current_index = 0;
 int current_rep = 0;
 
+
+static void get_commandline(int argc, char** argv, char* buff, size_t size)
+{
+	int i;
+	int j;
+        int dest = 0;
+	if (size == 0)
+		return;
+	for (i = 1; i < argc; i += 1 ) {
+		for (j=0; argv[i][j] != '\0'; j += 1) {
+   	         	if (dest  + 1 >= size)
+				break;
+			buff[dest++] = argv[i][j];
+		}
+   	        if (dest  + 1 >= size)
+			break;
+                buff[dest++] = ' ';
+	}
+	buff[--dest] = '\0';
+}
+
 lirc_t emulation_readdata(lirc_t timeout)
 {
 	static lirc_t sum = 0;
@@ -299,11 +320,13 @@ int main(int argc, char **argv)
 	char *device = NULL;
 	int using_template = 0;
 	int analyse = 0;
+        char commandline[128];
 #ifdef DEBUG
 	int get_pre = 0, get_post = 0, test = 0, invert = 0, trail = 0;
 #endif
 
 	progname = argv[0];
+        get_commandline(argc, argv, commandline, sizeof(commandline));
 	force = 0;
 	hw_choose_driver(NULL);
 	while (1) {
@@ -443,7 +466,7 @@ int main(int argc, char **argv)
 			if (invert)
 				for_each_remote(remotes, invert_data);
 
-			fprint_remotes(stdout, remotes);
+			fprint_remotes(stdout, remotes, commandline);
 			free_config(remotes);
 			return (EXIT_SUCCESS);
 		}
@@ -543,9 +566,10 @@ int main(int argc, char **argv)
 	       "distribution of this package. You can use a template files by\n"
 	       "providing the path of the file as command line parameter.\n"
 	       "\n"
-	       "Please send the finished config files to <lirc@bartelmus.de> so that I\n"
-	       "can make them available to others. Don't forget to put all information\n"
-	       "that you can get about the remote control in the header of the file.\n" "\n"
+	       "Please send the finished config files to <lirc-list@lists.sourceforge.net >\n"
+	       "so it can be made available to others. Don't forget to put all information\n"
+	       "that you can get about the remote control in the header of the file.\n"
+	       "Please use the symbols in the namespace where appropriate. \n\n"
 	       "Press RETURN to continue.\n\n");
 
 	getchar();
@@ -604,7 +628,7 @@ int main(int argc, char **argv)
 	printf("Now enter the names for the buttons.\n");
 
 	fprint_copyright(fout);
-	fprint_comment(fout, &remote);
+	fprint_comment(fout, &remote, commandline);
 	fprint_remote_head(fout, &remote);
 	fprint_remote_signal_head(fout, &remote);
 	while (1) {
@@ -852,7 +876,7 @@ int main(int argc, char **argv)
 		return (EXIT_FAILURE);
 	}
 	fprint_copyright(fout);
-	fprint_remotes(fout, remotes);
+	fprint_remotes(fout, remotes, commandline);
 	free_config(remotes);
 	printf("Successfully written config file.\n");
 	return (EXIT_SUCCESS);
@@ -1327,7 +1351,7 @@ void analyse_remote(struct ir_remote *raw_data)
 	}
 	new_codes[new_index].name = NULL;
 	remote.codes = new_codes;
-	fprint_remotes(stdout, &remote);
+	fprint_remotes(stdout, &remote, (const char*)NULL);
 	remote.codes = NULL;
 	free(new_codes);
 }
