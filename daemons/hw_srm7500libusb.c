@@ -4,7 +4,7 @@
  ** hw_srm7500libusb.c ******************************************************
  ****************************************************************************
  *  Userspace (libusb) driver for Philips SRM7500 RF Remote.
- *  
+ *
  *  Copyright (C) 2009 Henning Glawe <glaweh@debian.org>
  *
  *  based on Userspace (libusb) driver for ATI/NVidia/X10 RF Remote.
@@ -382,12 +382,11 @@ static int srm7500_initialize_802154_stack()
 	philipsrf_incoming_t packet_buffer_in;
 
 	int i;
-	int outret, inret;
 	int tries = 3;
 	int answer_received = 0;
 
 	while ((!answer_received) && (tries > 0)) {
-		inret = philipsrf_input(&packet_buffer_in);
+		philipsrf_input(&packet_buffer_in);
 		if ((packet_buffer_in.type == MLME_SET_confirm) && (packet_buffer_in.data[0] == 0)
 		    && (packet_buffer_in.data[1] == PIB_ATTR_macExtendedAddress))
 			answer_received = 1;
@@ -400,8 +399,8 @@ static int srm7500_initialize_802154_stack()
 	packet_buffer_out.type = MLME_RESET_request;
 	packet_buffer_out.data[0] = MLME_TRUE;	/* SetDefaultPIB */
 
-	outret = philipsrf_output(packet_buffer_out);
-	inret = philipsrf_input(&packet_buffer_in);
+	philipsrf_output(packet_buffer_out);
+	philipsrf_input(&packet_buffer_in);
 	if (!((packet_buffer_in.type == MLME_RESET_confirm) && (packet_buffer_in.data[0] == 0))) {
 		logprintf(LOG_ERR, "could not reset USB dongle!");
 		return 0;
@@ -740,7 +739,7 @@ static int usb_read_loop(int fd)
 	while (!srm7500_terminate) {
 		philipsrf_outgoing_t packet_buffer_out;
 		philipsrf_incoming_t packet_buffer_in;
-		int inret, outret;
+		int inret;
 		int i;
 		int is_ok;
 		inret = philipsrf_input(&packet_buffer_in);
@@ -802,7 +801,7 @@ static int usb_read_loop(int fd)
 			}
 			/* SecurityLevel,KeyIdMode */
 			packet_buffer_out.data[11] = 0;
-			outret = philipsrf_output(packet_buffer_out);
+			philipsrf_output(packet_buffer_out);
 			inret = philipsrf_input(&packet_buffer_in);
 			if ((packet_buffer_in.type == MLME_COMM_STATUS_indication)
 			    && (packet_buffer_in.data[packet_buffer_in.length - 2] == 0)) {
@@ -856,7 +855,7 @@ static int usb_read_loop(int fd)
 			break;
 		case MCPS_DATA_indication:
 			/* nomal key on remote pressed
-			 *   press: 1242  02 b59e 0027  02 b59e 4a61 
+			 *   press: 1242  02 b59e 0027  02 b59e 4a61
 			 *            04  00 00 46 01  ff 10
 			 *  repeat: 1242  02 b59e 0027  02 b59e 4a61
 			 *            04  00 00 46 02  ff 10

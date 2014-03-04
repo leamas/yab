@@ -5,7 +5,7 @@
  ****************************************************************************
  *
  * functions that decode IR codes
- * 
+ *
  * Copyright (C) 1999 Christoph Bartelmus <lirc@bartelmus.de>
  *
  */
@@ -397,7 +397,7 @@ inline lirc_t sync_rec_buffer(struct ir_remote * remote)
 			if (deltas == 0)
 				return (0);
 			count++;
-			if (count > REC_SYNC) {	/* no sync found, 
+			if (count > REC_SYNC) {	/* no sync found,
 						   let's try a diffrent remote */
 				return (0);
 			}
@@ -660,7 +660,7 @@ ir_code get_data(struct ir_remote * remote, int bits, int done)
 		return (code);
 	} else if (is_serial(remote)) {
 		int received;
-		int space, start_bit, stop_bit, parity_bit;
+		int space, stop_bit, parity_bit;
 		int parity;
 		lirc_t delta, origdelta, pending, expecting, gap_delta;
 		lirc_t base, stop;
@@ -673,7 +673,6 @@ ir_code get_data(struct ir_remote * remote, int bits, int done)
 
 		received = 0;
 		space = (rec_buffer.pendingp == 0);	/* expecting space ? */
-		start_bit = 0;
 		stop_bit = 0;
 		parity_bit = 0;
 		delta = origdelta = 0;

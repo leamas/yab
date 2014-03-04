@@ -5,14 +5,14 @@
  ****************************************************************************
  *
  * routines for using a IR receiver in microphone input using portaudio library
- * 
+ *
  * Copyright (C) 1999 Christoph Bartelmus <lirc@bartelmus.de>
  * Copyright (C) 2001, 2002 Pavel Machek <pavel@ucw.cz>
  * Copyright (C) 2002 Matthias Ringwald <ringwald@inf.ethz.ch>
  *
  * Distribute under GPL version 2 or later.
  *
- * Using ... hardware ... 
+ * Using ... hardware ...
  *
  */
 
@@ -100,7 +100,7 @@ static void addCode(lirc_t data)
 ** that could mess up the system like calling malloc() or free().
 */
 
-static int recordCallback(const void *inputBuffer, void *outputBuffer, __u32 framesPerBuffer,
+static int recordCallback(const void *inputBuffer, void *outputBuffer, unsigned long framesPerBuffer,
 			  const PaStreamCallbackTimeInfo * outTime, PaStreamCallbackFlags status, void *userData)
 {
 	paTestData *data = (paTestData *) userData;
@@ -468,7 +468,7 @@ int audio_init()
 
 	LOGPRINTF(1, "hw_audio_init()");
 
-	// 
+	//
 	logprintf(LOG_INFO, "Initializing %s...", hw.device);
 	init_rec_buffer();
 	rewind_rec_buffer();

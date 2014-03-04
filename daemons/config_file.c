@@ -44,6 +44,30 @@ static int parse_error;
 static struct ir_remote *read_config_recursive(FILE * f, const char *name, int depth);
 static void calculate_signal_lengths(struct ir_remote *remote);
 
+const struct flaglist all_flags[] = {
+	{"RAW_CODES", RAW_CODES},
+	{"RC5", RC5},
+	{"SHIFT_ENC", SHIFT_ENC},       /* obsolete */
+	{"RC6", RC6},
+	{"RCMM", RCMM},
+	{"SPACE_ENC", SPACE_ENC},
+	{"SPACE_FIRST", SPACE_FIRST},
+	{"GOLDSTAR", GOLDSTAR},
+	{"GRUNDIG", GRUNDIG},
+	{"BO", BO},
+	{"SERIAL", SERIAL},
+	{"XMP", XMP},
+
+	{"REVERSE", REVERSE},
+	{"NO_HEAD_REP", NO_HEAD_REP},
+	{"NO_FOOT_REP", NO_FOOT_REP},
+	{"CONST_LENGTH", CONST_LENGTH}, /* remember to adapt warning
+					   message when changing this */
+	{"REPEAT_HEADER", REPEAT_HEADER},
+	{NULL, 0},
+};
+
+
 void **init_void_array(struct void_array *ar, size_t chunk_size, size_t item_size)
 {
 	ar->chunk_size = chunk_size;
@@ -249,7 +273,7 @@ struct ir_code_node *defineNode(struct ir_ncode *code, const char *val)
 
 int parseFlags(char *val)
 {
-	struct flaglist *flaglptr;
+	const struct flaglist *flaglptr;
 	int flags = 0;
 	char *flag, *help;
 
@@ -765,11 +789,9 @@ static struct ir_remote *read_config_recursive(FILE * f, const char *name, int d
 				} else if (mode == ID_codes) {
 					code = defineCode(key, val, &name_code);
 					while (!parse_error && val2 != NULL) {
-						struct ir_code_node *node;
-
 						if (val2[0] == '#')
 							break;	/* comment */
-						node = defineNode(code, val2);
+						defineNode(code, val2);
 						val2 = strtok(NULL, whitespace);
 					}
 					code->current = NULL;
@@ -838,11 +860,9 @@ static struct ir_remote *read_config_recursive(FILE * f, const char *name, int d
 				} else if (mode == ID_codes) {
 					code = defineCode(key, val, &name_code);
 					while (!parse_error && val2 != NULL) {
-						struct ir_code_node *node;
-
 						if (val2[0] == '#')
 							break;	/* comment */
-						node = defineNode(code, val2);
+						defineNode(code, val2);
 						val2 = strtok(NULL, whitespace);
 					}
 					code->current = NULL;
@@ -870,11 +890,9 @@ static struct ir_remote *read_config_recursive(FILE * f, const char *name, int d
 				case ID_codes:
 					code = defineCode(key, val, &name_code);
 					while (!parse_error && val2 != NULL) {
-						struct ir_code_node *node;
-
 						if (val2[0] == '#')
 							break;	/* comment */
-						node = defineNode(code, val2);
+						defineNode(code, val2);
 						val2 = strtok(NULL, whitespace);
 					}
 					code->current = NULL;

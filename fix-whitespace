@@ -1,0 +1,9 @@
+#!/bin/dash
+#
+# Fix whitespace issues: convert blanks to tabs, strip trailing blanks.
+
+for f in $(git ls-files | grep -E '[.]c$|[.]h$' ); do
+       test -L $f && continue
+       unexpand $f | sed -r 's/[ \t]+$//' > $f.tmp && mv -f $f.tmp $f
+done
+

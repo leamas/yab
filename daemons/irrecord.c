@@ -148,18 +148,18 @@ static void get_commandline(int argc, char** argv, char* buff, size_t size)
 {
 	int i;
 	int j;
-        int dest = 0;
+	int dest = 0;
 	if (size == 0)
 		return;
 	for (i = 1; i < argc; i += 1 ) {
 		for (j=0; argv[i][j] != '\0'; j += 1) {
-   	         	if (dest  + 1 >= size)
+			if (dest  + 1 >= size)
 				break;
 			buff[dest++] = argv[i][j];
 		}
-   	        if (dest  + 1 >= size)
+		if (dest  + 1 >= size)
 			break;
-                buff[dest++] = ' ';
+		buff[dest++] = ' ';
 	}
 	buff[--dest] = '\0';
 }
@@ -320,13 +320,13 @@ int main(int argc, char **argv)
 	char *device = NULL;
 	int using_template = 0;
 	int analyse = 0;
-        char commandline[128];
+	char commandline[128];
 #ifdef DEBUG
 	int get_pre = 0, get_post = 0, test = 0, invert = 0, trail = 0;
 #endif
 
 	progname = argv[0];
-        get_commandline(argc, argv, commandline, sizeof(commandline));
+	get_commandline(argc, argv, commandline, sizeof(commandline));
 	force = 0;
 	hw_choose_driver(NULL);
 	while (1) {
@@ -2332,7 +2332,7 @@ int get_gap_length(struct ir_remote *remote)
 {
 	struct lengths *gaps = NULL;
 	struct timeval start, end, last = { 0, 0 };
-	int count, flag;
+	int flag;
 	struct lengths *scan;
 	int maxcount, lastmaxcount;
 	lirc_t gap;
@@ -2340,7 +2340,6 @@ int get_gap_length(struct ir_remote *remote)
 	remote->eps = eps;
 	remote->aeps = aeps;
 
-	count = 0;
 	flag = 0;
 	lastmaxcount = 0;
 	printf("Hold down an arbitrary button.\n");

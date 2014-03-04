@@ -4,14 +4,14 @@
  *****************************************************************************
  * Routines for the HomeElectronics TIRA-2 USB dongle.
  *
- * Serial protocol described at: 
+ * Serial protocol described at:
  *    http://www.home-electro.com/Download/Protocol2.pdf
  *
  * Copyright (C) 2003 Gregory McLean <gregm@gxsnmp.org>
- *  modified for 
- *  IRA support, 
+ *  modified for
+ *  IRA support,
  *  transmit feature,
- *  receive in pulse/space mode feature 
+ *  receive in pulse/space mode feature
  *  by Arnold Pakolitz <spud28@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -350,7 +350,6 @@ fail:
 
 int tira_setup(void)
 {
-	int i;
 	int ptr;
 	/* Clear the port of any random data */
 	while (read(hw.fd, &ptr, 1) >= 0) ;
@@ -368,7 +367,7 @@ int tira_setup(void)
 	   that don't seem to work... *shrug*
 	 */
 	usleep(2 * (100 * 1000));
-	i = read(hw.fd, response, 3);
+	read(hw.fd, response, 3);
 
 	if (strncmp(response, "OIP", 3) == 0) {
 		read(hw.fd, &ptr, 1);	/* read the calibration value */
@@ -382,7 +381,7 @@ int tira_setup(void)
 			write(hw.fd, "IV", 2);
 			usleep(2 * (100 * 1000));
 			memset(response, 0, sizeof(response));
-			i = read(hw.fd, response, sizeof(response) - 1);
+			read(hw.fd, response, sizeof(response) - 1);
 			logprintf(LOG_INFO, "firmware version %s", response);
 		} else {
 			logprintf(LOG_INFO, "Ira/Tira-1 detected");
