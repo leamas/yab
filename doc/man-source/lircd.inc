@@ -82,6 +82,10 @@ The --plugindir option sets the directory from which lircd loads it's
 userspace drivers. These are *.ko files, by default found in
 /usr/lib/lirc/plugins.
 
+The \-\-options\-file option changes the path for the file from which
+default values are read. It defaults to /etc/lirc/lirc_options.conf.
+See [FILES] below.
+
 [FILES]
 
 The config file for lircd is located in /etc/lirc/lircd.conf. lircd
@@ -91,4 +95,10 @@ depends on your system configuration where log messages will show up).
 You can make lircd reread its config file and reopen its log file by
 sending the HUP signal to the program. That way you can rotate old log
 files.
+
+0.9.1+ versions also supports an options file, by default located at
+/etc/lirc/lirc_options.conf. This is a simple ini-style file which
+accepts exactly the same options as lird do on the command line.
+Boolean values can be written as Yes/No or 1/0. E. g., a line like
+"debug = yes" will turn on debugging by default.
 
