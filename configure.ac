@@ -12,6 +12,9 @@ AC_CONFIG_HEADERS(config.h)
 
 CFLAGS="${CFLAGS--O2 -g -Wall}"
 
+dnl Remove, added upon from various plugin checks.
+rm -f skipped_plugins
+
 dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
@@ -108,6 +111,8 @@ case "${host_os}" in
     use_fifos="no"
     ;;
 esac
+
+AC_SUBST(portaudio_lib_other)
 
 # use fifo instead of devnode (required on mac os x)
 AM_CONDITIONAL(USE_FIFOS, test "$use_fifos" = "yes")
@@ -293,46 +298,67 @@ AH_TEMPLATE([SYSCONFDIR],
 AH_TEMPLATE([USE_SYSLOG],
 	[define if you want to log to syslog instead of logfile])
 
-AC_CHECK_LIB(caraca_client, caraca_init,
-  AC_DEFINE(HAVE_LIBCARACA)
-  possible_drivers="${possible_drivers} (caraca)"
+
+AC_CHECK_LIB(caraca_client, caraca_init,[
+    AC_DEFINE(HAVE_LIBCARACA)
+    AM_CONDITIONAL([BUILD_CARACA],[true])
+  possible_drivers="${possible_drivers} (caraca)"],[
+    AM_CONDITIONAL([BUILD_CARACA],[false])]
 )
-AC_CHECK_HEADER(usb.h,
+AC_CHECK_HEADER(usb.h,[
   AC_DEFINE(HAVE_LIBUSB)
-  possible_drivers="${possible_drivers} (atilibusb) (awlibusb) (dfclibusb) (commandir) (srm7500libusb)"
+  AM_CONDITIONAL([BUILD_USB],[true])
+  possible_drivers="${possible_drivers} (atilibusb) (awlibusb) (dfclibusb) (commandir) (srm7500libusb)"],[
+  AM_CONDITIONAL([BUILD_USB],[false])]
 )
-AC_CHECK_HEADER(ftdi.h,
+AC_CHECK_HEADER(ftdi.h,[
   AC_DEFINE(HAVE_FTDI)
-  possible_drivers="${possible_drivers} (ftdi)"
+  AM_CONDITIONAL([BUILD_FTDI],[true])
+  possible_drivers="${possible_drivers} (ftdi)"],[
+  AM_CONDITIONAL([BUILD_FTDI],[false])]
 )
-AC_CHECK_HEADER(iguanaIR.h,
+AC_CHECK_HEADER(iguanaIR.h,[
+  AM_CONDITIONAL([BUILD_IGUANAIR],[true])
   AC_DEFINE(HAVE_IGUANAIR)
-  possible_drivers="${possible_drivers} (iguanaIR)"
+  possible_drivers="${possible_drivers} (iguanaIR)"],[
+  AM_CONDITIONAL([BUILD_IGUANAIR],[false])]
 )
-AC_CHECK_LIB(irman, ir_strerror,
+AC_CHECK_LIB(irman, ir_strerror,[
   AC_DEFINE(HAVE_LIBIRMAN)
+  AM_CONDITIONAL([BUILD_LIBIRMAN],[true])
   possible_drivers="${possible_drivers} (irman)"
+  ],[
+  AM_CONDITIONAL([BUILD_LIBIRMAN],[false])]
 )
-AC_CHECK_LIB(irman_sw, ir_strerror,
+AC_CHECK_LIB(irman_sw, ir_strerror,[
   AC_DEFINE(HAVE_LIBIRMAN_SW)
+  AM_CONDITIONAL([BUILD_LIBIRMAN_SW],[true])
   possible_drivers="${possible_drivers} (irman_sw)"
+  ],[
+  AM_CONDITIONAL([BUILD_LIBIRMAN_SW],[false])]
 )
 dnl audio driver requires PortAudio library installed and some linker flags
 AC_CHECK_HEADERS(portaudio.h,[
   AC_CHECK_LIB(portaudio, Pa_Initialize,[
+    AM_CONDITIONAL([BUILD_LIBPORTAUDIO],[true])
     AC_DEFINE(HAVE_LIBPORTAUDIO)
     possible_drivers="${possible_drivers} (audio)"
-    ],,${portaudio_lib_other}
+    ],[
+    AM_CONDITIONAL([BUILD_LIBPORTAUDIO],[false])
+    ],[
+    ${portaudio_lib_other}]
   )]
 )
 dnl audio_alsa driver requires ALSA library installed and some linker flags
 have_alsa=no
 AC_CHECK_HEADERS(alsa/asoundlib.h,[
   AC_CHECK_LIB(asound, snd_pcm_open,[
+    AM_CONDITIONAL([BUILD_LIBALSA],[true])
     AC_DEFINE(HAVE_LIBALSA)
     have_alsa=yes
     possible_drivers="${possible_drivers} (audio_alsa)"
-    ],,
+    ],[
+    AM_CONDITIONAL([BUILD_LIBALSA],[false])],
   )]
 )
 dnl alsa_usb driver requires an ALSA that knows about our hwdep device
@@ -345,9 +371,11 @@ if test "$have_alsa" = "yes"; then
 ]])],[
     AC_MSG_RESULT(yes)
     AC_DEFINE(HAVE_ALSA_SB_RC)
+    AM_CONDITIONAL([BUILD_ALSA_SB_RC],[true])
     possible_drivers="${possible_drivers} (alsa_usb)"
     ],[
     AC_MSG_RESULT(no)
+    AM_CONDITIONAL([BUILD_ALSA_SB_RC],[false])
   ])
 fi
 dnl creative_infracd driver requires linux scsi api
@@ -357,6 +385,7 @@ AC_CHECK_HEADERS(scsi/sg.h,[
   ]
 )
 dnl dev_input driver requires linux input device api
+dnl for now, always build this plugin.
 AC_CHECK_HEADERS(linux/input.h,[
   AC_DEFINE(HAVE_LINUX_DEVINPUT)
   possible_drivers="${possible_drivers} (devinput)"
@@ -375,9 +404,11 @@ AC_CHECK_HEADERS([linux/hiddev.h],[
     ]])],[
     AC_MSG_RESULT(yes)
     AC_DEFINE(HAVE_LINUX_HIDDEV_FLAG_UREF)
+    AM_CONDITIONAL([BUILD_HIDDEV],[true])
     possible_drivers="${possible_drivers} (samsung) (sb0540)"
     ],[
     AC_MSG_RESULT(no)
+    AM_CONDITIONAL([BUILD_HIDDEV],[false])
     ])
   ], [],
 [#ifdef HAVE_LINUX_TYPES_H
@@ -385,16 +416,21 @@ AC_CHECK_HEADERS([linux/hiddev.h],[
 #endif
 ]
 )
+## FIXME: where is samsung/sb0450 drivers, really?!
 dnl dsp driver requires linux soundcard api
 AC_CHECK_HEADERS(sys/soundcard.h,[
+  AM_CONDITIONAL([BUILD_DSP],[true])
   AC_DEFINE(HAVE_SOUNDCARD)
   possible_drivers="${possible_drivers} (dsp)"
-  ]
+  ],[
+  AM_CONDITIONAL([BUILD_DSP],[false])]
 )
 dnl i2cuser driver requires the Linux I2C API
 AC_CHECK_HEADERS(linux/i2c-dev.h,[
+  AM_CONDITIONAL([BUILD_I2CUSER],[true])
   possible_drivers="${possible_drivers} (i2cuser)"
-  ]
+  ],[
+  AM_CONDITIONAL([BUILD_I2CUSER],[false])]
 )
 
 PKG_CHECK_MODULES([SYSTEMD],[libsystemd-daemon],[AC_DEFINE(HAVE_SYSTEMD)],[true])
@@ -421,7 +457,7 @@ AC_ARG_WITH(driver,
                           hercules_smarttv_stereo, i2cuser,
                           iguanaIR, imon_24g,
                           imon_knob, imon_lcd, imon_pad, imon_rsc,
-                          irdeo, irdeo_remote, irlink, irman, irreal,
+                          irdeo, irdeo_remote, irlink, irman, irman_sw, irreal,
                           knc_one, kworld,
                           leadtek_0007, leadtek_0010, leadtek_pvr2000,
                           livedrive_midi, livedrive_seq, logitech,
@@ -456,13 +492,11 @@ atwf83_lib=""
 awlibusb_lib=""
 dfclibusb_lib=""
 srm7500libusb_lib=""
-hw_module="hw_default.o receive.o transmit.o"
 HW_DEFAULT="hw_default"
 kernel_module=""
 
 if test "$driver" = "none"; then
   lirc_driver=none
-  hw_module=""
   HW_DEFAULT="hw_null"
 fi
 
@@ -470,208 +504,18 @@ if test "$driver" = "userspace" -o "$driver" = "all"; then
   AC_DEFINE(LIRC_DRIVER_ANY)
   lirc_driver=$driver
 
-  any_possible_drivers=`echo ${possible_drivers} | sed -e's/ /-/g' \
-			  -e's/)-(/ /g'  -e's/(//g' -e's/)//g' \
-			  -e's/-$//g'`
-  for any_driver in ${any_possible_drivers}; do
-  case ${any_driver} in
-	accent)
-		hw_module="${hw_module} hw_accent.o serial.o"
-		;;
-	alsa_usb)
-		hw_module="${hw_module} hw_alsa_usb.o"
-		alsa_lib=-lasound
-		;;
-	asusdh)
-		hw_module="${hw_module} hw_hiddev.o"
-		;;
-	atilibusb)
-		hw_module="${hw_module} hw_atilibusb.o receive.o"
-		atilibusb_lib=`${LIBUSB_CONFIG} --libs`
-		CFLAGS="$CFLAGS `${LIBUSB_CONFIG} --cflags`"
-		;;
-	atwf83)
-		hw_module="${hw_module} hw_atwf83.o"
-		atwf83_lib=-lpthread
-		;;
-	audio)
-		hw_module="${hw_module} hw_audio.o transmit.o receive.o"
-		portaudio_lib="-lportaudio ${portaudio_lib_other}"
-		;;
-	audio_alsa)
-		hw_module="${hw_module} hw_audio_alsa.o receive.o"
-		alsa_lib=-lasound
-		;;
-	awlibusb)
-		hw_module="${hw_module} hw_awlibusb.o receive.o"
-		awlibusb_lib=`${LIBUSB_CONFIG} --libs`
-		CFLAGS="$CFLAGS `${LIBUSB_CONFIG} --cflags`"
-		;;
-	bte)
-		hw_module="${hw_module} hw_bte.o serial.o"
-		;;
-	bw6130)
-		hw_module="${hw_module} hw_hiddev.o"
-		;;
-	caraca)
-		hw_module="${hw_module} hw_caraca.o"
-		caraca_lib=-lcaraca_client
-		;;
-	creative)
-		hw_module="${hw_module} hw_creative.o serial.o"
-		;;
-	creative_infracd)
-		hw_module="${hw_module} hw_creative_infracd.o"
-		;;
-	commandir)
-		hw_module="${hw_module} hw_commandir.o receive.o"
-		commandir_lib=`${LIBUSB_CONFIG} --libs`
-		CFLAGS="$CFLAGS `${LIBUSB_CONFIG} --cflags`"
-		;;
-	devinput)
-		hw_module="${hw_module} hw_devinput.o"
-		;;
-	dfclibusb)
-		hw_module="${hw_module} hw_dfclibusb.o receive.o"
-		dfclibusb_lib=`${LIBUSB_CONFIG} --libs`
-		CFLAGS="$CFLAGS `${LIBUSB_CONFIG} --cflags`"
-		;;
-	dsp)
-		hw_module="${hw_module} hw_dsp.o receive.o"
-		;;
-	dvico)
-		hw_module="${hw_module} hw_hiddev.o"
-		;;
-	ea65)
-		hw_module="${hw_module} hw_ea65.o serial.o"
-		;;
-	exaudio)
-		;;
-	ftdi)
-		hw_module="${hw_module} hw_ftdi.o receive.o transmit.o"
-		ftdi_lib="-lftdi"
-		;;
-	i2cuser)
-		hw_module="${hw_module} hw_i2cuser.o receive.o"
-		;;
-	iguanaIR)
-		hw_module="${hw_module} hw_iguanaIR.o transmit.o receive.o"
-		iguanaIR_lib=-liguanaIR
-		;;
-	irlink)
-		hw_module="${hw_module} hw_irlink.o serial.o receive.o"
-		;;
-	irman)
-		hw_module="${hw_module} hw_irman.o serial.o"
-		irman_lib=-lirman
-		;;
-	# There is not much sense in using 'irman_sw' with driver
-	# 'any' and that would conflict with 'irman' which will
-	# probably also be available.
-	#
-	#irman_sw)
-		#hw_module="${hw_module} hw_irman.o serial.o"
-		#irman_lib=-lirman_sw
-		#;;
-	irreal)
-		#hw_module="${hw_module} hw_irreal.o serial.o receive.o transmit.o"
-		;;
-	lirc_dev-lirc_wpc8769l)
-		;;
-	lirc_flyvideo)
-		;;
-	livedrive_midi)
-		hw_module="${hw_module} hw_livedrive_common.o hw_livedrive_midi.o"
-		;;
-	livedrive_seq)
-		hw_module="${hw_module} hw_livedrive_common.o hw_livedrive_seq.o"
-		;;
-	logitech)
-		hw_module="${hw_module} hw_logitech.o serial.o"
-		;;
-	macmini)
-		hw_module="${hw_module} hw_hiddev.o"
-		;;
-	mediafocusI)
-		;;
-	mouseremote)
-		hw_module="${hw_module} hw_mouseremote.o serial.o"
-		;;
-	mouseremote_ps2)
-		hw_module="${hw_module} hw_mouseremote.o serial.o"
-		;;
-	mp3anywhere)
-		hw_module="${hw_module} hw_mp3anywhere.o serial.o"
-		;;
-	mplay)
-		hw_module="${hw_module} hw_mplay.o serial.o"
-		;;
-	mplay2)
-		hw_module="${hw_module} hw_mplay.o serial.o"
-		;;
-	pcmak*)
-		hw_module="${hw_module} hw_pcmak.o serial.o"
-		;;
-	pctv)
-		hw_module="${hw_module} hw_pinsys.o serial.o"
-		;;
-	remotemaster)
-		hw_module="${hw_module} hw_pixelview.o serial.o"
-		;;
-	samsung)
-		hw_module="${hw_module} hw_hiddev.o"
-		;;
-	sb0540)
-		hw_module="${hw_module} hw_hiddev.o"
-		;;
-	silitek)
-		hw_module="${hw_module} hw_silitek.o serial.o"
-		;;
-	#slinke)
-		#hw_module="${hw_module} hw_slinke.o serial.o receive.o"
-		#;;
-	srm7500libusb)
-		hw_module="${hw_module} hw_srm7500libusb.o receive.o"
-		srm7500libusb_lib=`${LIBUSB_CONFIG} --libs`
-		CFLAGS="$CFLAGS `${LIBUSB_CONFIG} --cflags`"
-		;;
-	tira|tira_raw)
-		hw_module="${hw_module} hw_tira.o receive.o transmit.o"
-		;;
-	udp)
-		hw_module="${hw_module} hw_udp.o receive.o"
-		;;
-	uirt2)
-		hw_module="${hw_module} hw_uirt2.o serial.o"
-		;;
-	uirt2_raw|usb_uirt_raw)
-		hw_module="${hw_module} hw_uirt2_raw.o hw_uirt2_common.o serial.o receive.o transmit.o"
-		;;
-	usbx)
-		hw_module="${hw_module} hw_usbx.o serial.o"
-		;;
-  esac
-  done
-  #remove duplicates
-
-  #sed segfaults when $hw_module is too long :(
-  #hw_module=`echo ${hw_module}| sed \
-  #			-e':again' \
-  #			-e's/\(.*\)\(\<.*\) \(.*\) \2\(.*\)$/\1\2 \3\4/' \
-  #			-e'tagain'`
-
-  space_to_newline()
-  { for token in $*; do echo $token; done; }
-  newline_to_space()
-  { echo $*; }
-
-  hw_module=$(newline_to_space $(space_to_newline ${hw_module}| sort -u))
-
 fi
+LIBUSB_LIBS=''
+LIBUSB_CFLAGS=''
+if test -n "${LIBUSB_CONFIG}"; then
+    LIBUSB_LIBS="`${LIBUSB_CONFIG} --libs`"
+    LIBUSB_CFLAGS="`${LIBUSB_CONFIG} --cflags`"
+fi
+AC_SUBST(LIBUSB_LIBS)
+AC_SUBST(LIBUSB_CFLAGS)
 
 if test "$driver" = "accent"; then
   lirc_driver="none"
-  hw_module="hw_accent.o serial.o"
   HW_DEFAULT="hw_accent"
   lircd_conf="kanam_accent/lircd.conf.IR-100"
 fi
@@ -694,7 +538,6 @@ fi
 
 if test "$driver" = "alsa_usb"; then
   lirc_driver="alsa_usb"
-  hw_module="hw_alsa_usb.o"
   HW_DEFAULT="hw_alsa_usb"
   alsa_lib=-lasound
   lircd_conf="creative/lircd.conf.alsa_usb"
@@ -709,25 +552,18 @@ fi
 
 if test "$driver" = "asusdh"; then
   lirc_driver="$driver"
-  hw_module="hw_hiddev.o"
   HW_DEFAULT="hw_asusdh"
   lircd_conf="asus/lircd.conf.asusdh"
 fi
 
 if test "$driver" = "atilibusb"; then
   lirc_driver="$driver"
-  hw_module="hw_atilibusb.o receive.o"
   HW_DEFAULT="hw_atilibusb"
   lircd_conf="atiusb/lircd.conf.atilibusb"
-  if test -n "${LIBUSB_CONFIG}"; then
-    atilibusb_lib=`${LIBUSB_CONFIG} --libs`
-    CFLAGS="$CFLAGS `${LIBUSB_CONFIG} --cflags`"
-  fi
 fi
 
 if test "$driver" = "atwf83"; then
   lirc_driver="$driver"
-  hw_module="hw_atwf83.o"
   HW_DEFAULT="hw_atwf83"
   lircd_conf="aureal/lircd.conf.atwf83"
   atwf83_lib=-lpthread
@@ -735,25 +571,18 @@ fi
 
 if test "$driver" = "awlibusb"; then
   lirc_driver="$driver"
-  hw_module="hw_awlibusb.o receive.o"
   HW_DEFAULT="hw_awlibusb"
   lircd_conf="awlibusb/lircd.conf.awlibusb"
-  if test -n "${LIBUSB_CONFIG}"; then
-    awlibusb_lib=`${LIBUSB_CONFIG} --libs`
-    CFLAGS="$CFLAGS `${LIBUSB_CONFIG} --cflags`"
-  fi
 fi
 
 if test "$driver" = "audio"; then
   lirc_driver="audio"
-  hw_module="hw_audio.o transmit.o receive.o"
   HW_DEFAULT="hw_audio"
   portaudio_lib="-lportaudio ${portaudio_lib_other}"
 fi
 
 if test "$driver" = "audio_alsa"; then
   lirc_driver="audio_alsa"
-  hw_module="hw_audio_alsa.o receive.o"
   HW_DEFAULT="hw_audio_alsa"
   alsa_lib=-lasound
 fi
@@ -795,7 +624,6 @@ fi
 
 if test "$driver" = "bte"; then
   lirc_driver="none"
-  hw_module="hw_bte.o  serial.o"
   HW_DEFAULT="hw_bte"
   lircd_conf="ericsson/lircd.conf.bte"
 #  lircmd_conf="ericsson/lircmd.conf.bte"
@@ -803,7 +631,6 @@ fi
 
 if test "$driver" = "bw6130"; then
   lirc_driver="$driver"
-  hw_module="hw_hiddev.o"
   HW_DEFAULT="hw_bw6130"
   lircd_conf="remotec/lircd.conf.BW6130"
   lircmd_conf="remotec/lircmd.conf.BW6130"
@@ -811,7 +638,6 @@ fi
 
 if test "$driver" = "caraca"; then
   lirc_driver="caraca"
-  hw_module="hw_caraca.o"
   HW_DEFAULT="hw_caraca"
   caraca_lib=-lcaraca_client
   lircd_conf="caraca/lircd.conf.caraca"
@@ -826,14 +652,9 @@ fi
 
 if test "$driver" = "commandir"; then
   lirc_driver="$driver"
-  hw_module="hw_commandir.o receive.o transmit.o"
   HW_DEFAULT="hw_commandir"
   lircd_conf="hauppauge/lircd.conf.hauppauge"
   lircmd_conf="hauppauge/lircmd.conf.hauppauge"
-  if test -n "${LIBUSB_CONFIG}"; then
-    commandir_lib=`${LIBUSB_CONFIG} --libs`
-    CFLAGS="$CFLAGS `${LIBUSB_CONFIG} --cflags`"
-  fi
 fi
 
 if test "$driver" = "cph03x" -o "$driver" = "cph06x"; then
@@ -844,7 +665,6 @@ fi
 
 if test "$driver" = "creative"; then
   lirc_driver="none"
-  hw_module="hw_creative.o serial.o"
   HW_DEFAULT="hw_creative"
   lircd_conf="creative/lircd.conf.creative"
 #  lircmd_conf="creative/lircmd.conf.creative"
@@ -852,44 +672,34 @@ fi
 
 if test "$driver" = "creative_infracd"; then
   lirc_driver="none"
-  hw_module="hw_creative_infracd.o"
   HW_DEFAULT="hw_creative_infracd"
   lircd_conf="creative/lircd.conf.infracd"
 fi
 
 if test "$driver" = "devinput"; then
   lirc_driver="none"
-  hw_module="hw_devinput.o"
   HW_DEFAULT="hw_devinput"
   lircd_conf="devinput/lircd.conf.devinput"
 fi
 
 if test "$driver" = "dfclibusb"; then
   lirc_driver="$driver"
-  hw_module="hw_dfclibusb.o receive.o"
   HW_DEFAULT="hw_dfclibusb"
-  if test -n "${LIBUSB_CONFIG}"; then
-    dfclibusb_lib=`${LIBUSB_CONFIG} --libs`
-    CFLAGS="$CFLAGS `${LIBUSB_CONFIG} --cflags`"
-  fi
 fi
 
 if test "$driver" = "dsp"; then
   lirc_driver="none"
-  hw_module="hw_dsp.o receive.o"
   HW_DEFAULT="hw_dsp"
 fi
 
 if test "$driver" = "dvico"; then
   lirc_driver="$driver"
-  hw_module="hw_hiddev.o"
   HW_DEFAULT="hw_dvico"
   lircd_conf="dvico/lircd.conf.fusionHDTV"
 fi
 
 if test "$driver" = "ea65"; then
   lirc_driver="none"
-  hw_module="hw_ea65.o  serial.o"
   HW_DEFAULT="hw_ea65"
   lircd_conf="ea65/lircd.conf.ea65"
 fi
@@ -908,7 +718,6 @@ fi
 
 if test "$driver" = "ftdi"; then
   lirc_driver="none"
-  hw_module="hw_ftdi.o receive.o transmit.o"
   HW_DEFAULT="hw_ftdi"
   ftdi_lib="-lftdi"
 fi
@@ -938,13 +747,11 @@ fi
 
 if test "$driver" = "i2cuser"; then
   lirc_driver="none"
-  hw_module="hw_i2cuser.o receive.o"
   HW_DEFAULT="hw_i2cuser"
 fi
 
 if test "$driver" = "iguanaIR"; then
   lirc_driver="iguanaIR"
-  hw_module="hw_iguanaIR.o transmit.o receive.o"
   HW_DEFAULT="hw_iguanaIR"
   iguanaIR_lib=-liguanaIR
 fi
@@ -987,27 +794,21 @@ fi
 
 if test "$driver" = "irlink"; then
   lirc_driver="none"
-  hw_module="hw_irlink.o serial.o receive.o"
   HW_DEFAULT="hw_irlink"
 fi
 
 if test "$driver" = "irman"; then
   lirc_driver="irman"
-  hw_module="hw_irman.o serial.o"
   HW_DEFAULT="hw_irman"
-  irman_lib=-lirman
 fi
 
 if test "$driver" = "irman_sw"; then
   lirc_driver="irman_sw"
-  hw_module="hw_irman.o serial.o"
   HW_DEFAULT="hw_irman"
-  irman_lib=-lirman_sw
 fi
 
 if test "$driver" = "irreal"; then
   lirc_driver="none"
-  hw_module="hw_irreal.o serial.o receive.o transmit.o"
   HW_DEFAULT="hw_irreal"
 fi
 
@@ -1043,7 +844,6 @@ fi
 
 if test "$driver" = "livedrive_midi"; then
   lirc_driver="none"
-  hw_module="hw_livedrive_common.o hw_livedrive_midi.o"
   HW_DEFAULT="hw_livedrive_midi"
   lircd_conf="creative/lircd.conf.livedrive"
 #  lircmd_conf="creative/lircmd.conf.livedrive"
@@ -1051,7 +851,6 @@ fi
 
 if test "$driver" = "livedrive_seq"; then
   lirc_driver="none"
-  hw_module="hw_livedrive_common.o hw_livedrive_seq.o"
   HW_DEFAULT="hw_livedrive_seq"
   lircd_conf="creative/lircd.conf.livedrive"
 #  lircmd_conf="creative/lircmd.conf.livedrive"
@@ -1059,7 +858,6 @@ fi
 
 if test "$driver" = "logitech"; then
   lirc_driver="none"
-  hw_module="hw_logitech.o serial.o"
   HW_DEFAULT="hw_logitech"
   lircd_conf="logitech/lircd.conf.logitech"
   lircmd_conf="logitech/lircmd.conf.logitech"
@@ -1079,7 +877,6 @@ fi
 
 if test "$driver" = "macmini"; then
   lirc_driver="$driver"
-  hw_module="hw_hiddev.o"
   HW_DEFAULT="hw_macmini"
   lircd_conf="apple/lircd.conf.macmini"
 fi
@@ -1092,7 +889,6 @@ fi
 
 if test "$driver" = "mouseremote"; then
   lirc_driver="none"
-  hw_module="hw_mouseremote.o serial.o"
   HW_DEFAULT="hw_mouseremote"
   lircd_conf="x10/lircd.conf.mouseremote"
   lircmd_conf="x10/lircmd.conf.mouseremote"
@@ -1100,7 +896,6 @@ fi
 
 if test "$driver" = "mouseremote_ps2"; then
   lirc_driver="none"
-  hw_module="hw_mouseremote.o serial.o"
   HW_DEFAULT="hw_mouseremote_ps2"
   lircd_conf="x10/lircd.conf.mouseremote"
   lircmd_conf="x10/lircmd.conf.mouseremote"
@@ -1108,21 +903,18 @@ fi
 
 if test "$driver" = "mp3anywhere"; then
   lirc_driver="none"
-  hw_module="hw_mp3anywhere.o serial.o"
   HW_DEFAULT="hw_mp3anywhere"
   lircd_conf="x10/lircd.conf.mp3anywhere"
 fi
 
 if test "$driver" = "mplay"; then
   lirc_driver="none"
-  hw_module="hw_mplay.o serial.o"
   HW_DEFAULT="hw_mplay"
   lircd_conf="vlsystem/lircd.conf.mplay"
 fi
 
 if test "$driver" = "mplay2"; then
   lirc_driver="none"
-  hw_module="hw_mplay.o serial.o"
   HW_DEFAULT="hw_mplay2"
   lircd_conf="vlsystem/lircd.conf.mplay"
 fi
@@ -1139,7 +931,6 @@ fi
 
 if test "$driver" = "pcmak" -o "$driver" = "pcmak_usb"; then
   lirc_driver="none"
-  hw_module="hw_pcmak.o serial.o"
   HW_DEFAULT="hw_pcmak"
   lircd_conf="pcmak/lircd.conf.pcmak"
   lircmd_conf="pcmak/lircmd.conf.pcmak"
@@ -1147,7 +938,6 @@ fi
 
 if test "$driver" = "pctv"; then
   lirc_driver="none"
-  hw_module="hw_pinsys.o serial.o"
   HW_DEFAULT="hw_pinsys"
   lircd_conf="pinnacle_systems/lircd.conf.pctv"
 #  lircmd_conf="pinnacle_systems/lircmd.conf.pctv"
@@ -1180,7 +970,6 @@ fi
 
 if test "$driver" = "realmagic"; then
   lirc_driver="none"
-  hw_module="hw_pixelview.o serial.o"
   HW_DEFAULT="hw_pixelview"
   lircd_conf="sigma_designs/lircd.conf.realmagic"
 #  lircmd_conf="sigma_designs/lircmd.conf.realmagic"
@@ -1188,7 +977,6 @@ fi
 
 if test "$driver" = "remotemaster"; then
   lirc_driver="none"
-  hw_module="hw_pixelview.o serial.o"
   HW_DEFAULT="hw_pixelview"
   lircd_conf="pixelview/lircd.conf.remotemaster"
   lircmd_conf="pixelview/lircmd.conf.remotemaster"
@@ -1201,14 +989,12 @@ fi
 
 if test "$driver" = "samsung"; then
   lirc_driver="$driver"
-  hw_module="hw_hiddev.o"
   HW_DEFAULT="hw_samsung"
   lircd_conf="samsung/lircd.conf.samsung"
 fi
 
 if test "$driver" = "sb0540"; then
   lirc_driver="$driver"
-  hw_module="hw_hiddev.o"
   HW_DEFAULT="hw_sb0540"
 # original RM-1500 is included here
   lircd_conf="creative/lircd.conf.alsa_usb"
@@ -1216,7 +1002,6 @@ fi
 
 if test "$driver" = "silitek"; then
   lirc_driver="none"
-  hw_module="hw_silitek.o serial.o"
   HW_DEFAULT="hw_silitek"
   lircd_conf="silitek/lircd.conf.silitek"
   lircmd_conf="silitek/lircmd.conf.silitek"
@@ -1228,19 +1013,13 @@ if test "$driver" = "slinke"; then
   echo
   exit 1
   lirc_driver="none"
-  hw_module="hw_slinke.o serial.o receive.o"
   HW_DEFAULT="hw_slinke"
 fi
 
 if test "$driver" = "srm7500libusb"; then
   lirc_driver="$driver"
-  hw_module="hw_srm7500libusb.o receive.o"
   HW_DEFAULT="hw_srm7500libusb"
   lircd_conf="philips/lircd.conf.srm7500libusb"
-  if test -n "${LIBUSB_CONFIG}"; then
-    srm7500libusb_lib=`${LIBUSB_CONFIG} --libs`
-    CFLAGS="$CFLAGS `${LIBUSB_CONFIG} --cflags`"
-  fi
 fi
 
 if test "$driver" = "tekram"; then
@@ -1250,19 +1029,16 @@ fi
 
 if test "$driver" = "tira"; then
   lirc_driver="none"
-  hw_module="hw_tira.o serial.o receive.o transmit.o"
   HW_DEFAULT="hw_tira"
 fi
 
 if test "$driver" = "tira_raw"; then
   lirc_driver="none"
-  hw_module="hw_tira.o serial.o receive.o transmit.o"
   HW_DEFAULT="hw_tira_raw"
 fi
 
 if test "$driver" = "tuxbox"; then
   lirc_driver="none"
-  hw_module="hw_default.o receive.o transmit.o"
   HW_DEFAULT="hw_default"
 fi
 
@@ -1273,28 +1049,23 @@ fi
 
 if test "$driver" = "udp"; then
   lirc_driver="none"
-  hw_module="hw_udp.o receive.o"
   HW_DEFAULT="hw_udp"
 fi
 
 if test "$driver" = "uirt2"; then
   lirc_driver="none"
-  hw_module="hw_uirt2.o serial.o"
   HW_DEFAULT="hw_uirt2"
 fi
 if test "$driver" = "uirt2_raw"; then
   lirc_driver="none"
-  hw_module="hw_uirt2_raw.o hw_uirt2_common.o serial.o receive.o transmit.o"
   HW_DEFAULT="hw_uirt2_raw"
 fi
 if test "$driver" = "usb_uirt_raw"; then
   lirc_driver="none"
-  hw_module="hw_uirt2_raw.o hw_uirt2_common.o serial.o receive.o transmit.o"
   HW_DEFAULT="hw_usb_uirt_raw"
 fi
 if test "$driver" = "usbx"; then
   lirc_driver="none"
-  hw_module="hw_usbx.o serial.o"
   HW_DEFAULT="hw_usbx"
   lircd_conf="adstech/lircd.conf.usbx-707"
 fi
@@ -1528,9 +1299,6 @@ varrundir_exp=`eval "echo ${varrundir}"`
 prefix=$cur_prefix
 
 receive=""
-if ! echo ${hw_module}|grep " receive.o" >/dev/null; then
-	receive="receive.o"
-fi
 
 hw_module_libs="${alsa_lib} ${atilibusb_lib} ${awlibusb_lib} ${caraca_lib} ${commandir_lib} ${dfclibusb_lib} ${ftdi_lib} ${iguanaIR_lib} ${irman_lib} ${portaudio_lib} ${srm7500libusb_lib} ${atwf83_lib}"
 
@@ -1546,7 +1314,6 @@ AC_SUBST(lirc_driver)
 AC_SUBST(hw_module_libs)
 AC_SUBST(vga_progs)
 AC_SUBST(x_progs)
-AC_SUBST(hw_module)
 AC_SUBST(receive)
 AC_SUBST(lircd_conf)
 AC_SUBST(lircmd_conf)
@@ -1634,6 +1401,7 @@ AC_CONFIG_FILES([
   drivers/lirc_dev/Makefile
   drivers/lirc_wpc8769l/Makefile
   daemons/Makefile
+  plugins/Makefile
   tools/Makefile
   doc/Makefile
   doc/man/Makefile

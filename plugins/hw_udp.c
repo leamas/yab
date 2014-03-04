@@ -28,12 +28,7 @@
 #include <netinet/in.h>
 #include <errno.h>
 
-#include "hardware.h"
-#include "ir_remote.h"
-#include "lircd.h"
-#include "receive.h"
-#include "transmit.h"
-#include "hw_default.h"
+#include "lirc.h"
 
 static int zerofd;		/* /dev/zero */
 static int sockfd;		/* the socket */

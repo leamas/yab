@@ -17,8 +17,7 @@
 #include <stdio.h>
 #include <alsa/asoundlib.h>
 
-#include "lircd.h"
-#include "hardware.h"
+#include "lirc.h"
 
 static int init(void);
 static int deinit(void);

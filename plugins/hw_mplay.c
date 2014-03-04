@@ -66,10 +66,7 @@
 #include <fcntl.h>
 #include <termios.h>
 
-#include "lircd.h"
-#include "hardware.h"
-#include "serial.h"
-
+#include "lirc.h"
 #include "hw_mplay.h"
 
 /* The mplay code length in bit */

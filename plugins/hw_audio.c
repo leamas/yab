@@ -37,12 +37,7 @@
 #include <pty.h>
 #endif
 
-#include "hardware.h"
-#include "ir_remote.h"
-#include "lircd.h"
-#include "receive.h"
-#include "transmit.h"
-#include "hw_default.h"
+#include "lirc.h"
 
 static int ptyfd;		/* the pty */
 

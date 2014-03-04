@@ -51,12 +51,7 @@
 #include <errno.h>
 #include <termios.h>
 
-#include "hardware.h"
-#include "receive.h"
-#include "transmit.h"
-#include "serial.h"
-#include "ir_remote.h"
-#include "lircd.h"
+#include "lirc.h"
 #include "hw_tira.h"
 
 const char failwrite[] = "failed writing to device";

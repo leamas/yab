@@ -96,11 +96,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include "ir_remote.h"
-#include "hardware.h"
-#include "lircd.h"
-#include "serial.h"
-
+#include "lirc.h"
 #include "hw_accent.h"
 
 // Max number of bytes received in a sequence.

@@ -31,11 +31,7 @@
 # undef DAEMONIZE
 #endif
 
-#include "hardware.h"
-#include "ir_remote.h"
-#include "lircd.h"
-#include "receive.h"
-#include "transmit.h"
+#include "lirc.h"
 #include "hw_default.h"
 
 extern struct ir_remote *repeat_remote;

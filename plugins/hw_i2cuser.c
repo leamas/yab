@@ -57,10 +57,7 @@
 #include <linux/i2c.h>
 #endif
 
-#include "hardware.h"
-#include "ir_remote.h"
-#include "lircd.h"
-#include "receive.h"
+#include "lirc.h"
 
 /* The number of bits and bytes in a code. */
 #define CODE_SIZE_BITS 13

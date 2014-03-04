@@ -39,8 +39,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <errno.h>
-#include "serial.h"
-#include "lircd.h"
+#include "lirc.h"
 #include "hw_uirt2_common.h"
 
 #define PRINT_TIME(a) \

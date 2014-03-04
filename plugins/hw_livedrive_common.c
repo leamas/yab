@@ -33,9 +33,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
-#include "hardware.h"
-#include "ir_remote.h"
-#include "lircd.h"
+#include "lirc.h"
 #include "hw_livedrive_common.h"
 
 struct timeval start, end, last;

@@ -45,10 +45,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
-#include "hardware.h"
-#include "serial.h"
-#include "ir_remote.h"
-#include "lircd.h"
+#include "lirc.h"
 
 #define NUMBYTES 6
 #define TIMEOUT 20000

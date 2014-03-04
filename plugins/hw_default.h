@@ -13,7 +13,7 @@
 #ifndef _HW_DEFAULT_H
 #define _HW_DEFAULT_H
 
-#include "ir_remote.h"
+#include "lirc.h"
 
 int default_init(void);
 int default_config(struct ir_remote *remotes);

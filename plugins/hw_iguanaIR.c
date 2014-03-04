@@ -25,14 +25,9 @@
 #include <wait.h>
 #endif
 
-#include "lircd.h"
-#include "ir_remote_types.h"
-
+#include "lirc.h"
 #include "iguanaIR.h"
 
-#include "hardware.h"
-#include "transmit.h"
-#include "receive.h"
 
 static int sendConn = -1;
 static pid_t child = 0;

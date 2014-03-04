@@ -44,12 +44,7 @@
 #include <stdlib.h>
 #include <signal.h>
 
-#include "hardware.h"
-#include "ir_remote.h"
-#include "lircd.h"
-#include "receive.h"
-#include "transmit.h"
-#include "hw_default.h"
+#include "lirc.h"
 
 #include <ftdi.h>
 

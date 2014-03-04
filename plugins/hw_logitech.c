@@ -29,10 +29,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
-#include "hardware.h"
-#include "serial.h"
-#include "ir_remote.h"
-#include "lircd.h"
+#include "lirc.h"
 #include "hw_logitech.h"
 
 #define NUMBYTES 16

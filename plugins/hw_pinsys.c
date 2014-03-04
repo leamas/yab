@@ -29,12 +29,9 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
-#include "hardware.h"
-#include "serial.h"
-#include "ir_remote.h"
-#include "lircd.h"
-
+#include "lirc.h"
 #include "hw_pinsys.h"
+
 #include <termios.h>
 
 extern struct ir_remote *repeat_remote, *last_remote;

@@ -28,7 +28,7 @@
 #ifndef HW_TIRA_H
 #define HW_TIRA_H
 
-#include "drivers/lirc.h"
+#include "lirc.h"
 
 int tira_decode(struct ir_remote *remote, ir_code * prep, ir_code * codep, ir_code * postp, int *repeat_flagp,
 		lirc_t * min_remaining_gapp, lirc_t * max_remaining_gapp);

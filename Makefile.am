@@ -14,7 +14,7 @@ if SYSTEMD_INSTALL
     SYSTEMD_DIR = systemd
 endif
 
-SUBDIRS = lib drivers daemons tools doc $(SYSTEMD_DIR)
+SUBDIRS = lib drivers daemons tools doc $(SYSTEMD_DIR) plugins
 
 dist_sysconf_DATA = lirc_options.conf
 

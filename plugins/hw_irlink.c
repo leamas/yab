@@ -42,11 +42,7 @@
 #include <errno.h>
 #include <termios.h>
 
-#include "hardware.h"
-#include "receive.h"
-#include "serial.h"
-#include "ir_remote.h"
-#include "lircd.h"
+#include "lirc.h"
 #include "hw_irlink.h"
 
 struct hardware hw_irlink = {

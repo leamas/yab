@@ -36,10 +36,7 @@
 #define ALSA_PCM_NEW_SW_PARAMS_API
 #include <alsa/asoundlib.h>
 
-#include "hardware.h"
-#include "ir_remote.h"
-#include "lircd.h"
-#include "receive.h"
+#include "lirc.h"
 
 /* SHORT DRIVER DESCRIPTION:
  *

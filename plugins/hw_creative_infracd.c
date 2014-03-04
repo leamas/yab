@@ -38,9 +38,7 @@
 #include <scsi/sg.h>
 #include <scsi/scsi.h>
 
-#include "hardware.h"
-#include "ir_remote.h"
-#include "lircd.h"
+#include "lirc.h"
 #include "hw_creative_infracd.h"
 
 struct hardware hw_creative_infracd = {
