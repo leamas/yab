@@ -22,9 +22,7 @@
 
 #include <sys/ioctl.h>
 
-#include "drivers/lirc.h"
-
-#include "lircd.h"
+#include "lirc.h"
 #include "ir_remote.h"
 #include "hardware.h"
 #include "release.h"

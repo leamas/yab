@@ -13,7 +13,6 @@
 #ifndef _HARDWARE_H
 #define _HARDWARE_H
 
-#include "drivers/lirc.h"
 #include "ir_remote_types.h"
 
 struct hardware {

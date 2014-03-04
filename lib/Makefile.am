@@ -7,7 +7,8 @@ liblirc_la_SOURCES          = config_file.c \
                               hw-types.c \
 	                      input_map.c \
                               ir_remote.c \
-			      lircd.c \
+			      lirc_log.c \
+			      lircd_base.c \
                               receive.c  \
                               release.c \
                               serial.c \
@@ -25,7 +26,9 @@ lirc_include_HEADERS        = config_file.h \
 	                      input_map.h \
                               ir_remote.h \
                               ir_remote_types.h \
-			      lircd.h \
+			      lirc_log.h \
+			      lirc_base.h \
+			      lircd_base.h \
 			      release.h \
                               receive.h \
                               serial.h \

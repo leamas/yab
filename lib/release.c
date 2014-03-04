@@ -18,9 +18,8 @@
 #include <stdio.h>
 #include <sys/time.h>
 
+#include "lirc.h"
 #include "release.h"
-#include "receive.h"
-#include "lircd.h"
 
 static struct timeval release_time;
 static struct ir_remote *release_remote;

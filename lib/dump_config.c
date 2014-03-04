@@ -25,6 +25,8 @@
 # endif
 #endif
 
+#include "ir_remote_types.h"
+#include "lirc.h"
 #include "dump_config.h"
 #include "config_file.h"
 

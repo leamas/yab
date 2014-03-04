@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,7 +33,8 @@
 				   baudrates */
 #endif
 
-#include "lircd.h"
+#include "lirc_log.h"
+#include "lircd_base.h"
 
 int tty_reset(int fd)
 {

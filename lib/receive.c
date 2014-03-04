@@ -17,7 +17,8 @@
 #include <limits.h>
 
 #include "hardware.h"
-#include "lircd.h"
+#include "lirc_log.h"
+#include "lircd_base.h"
 #include "receive.h"
 
 extern struct hardware hw;

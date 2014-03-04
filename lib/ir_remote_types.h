@@ -20,8 +20,10 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#include <linux/types.h>
 
-#include "drivers/lirc.h"
+#include "lirc_base.h"
+
 
 typedef __u64 ir_code;
 
