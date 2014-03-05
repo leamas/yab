@@ -16,10 +16,10 @@
 
 #include <limits.h>
 
-#include "hardware.h"
-#include "lirc_log.h"
-#include "lircd_base.h"
-#include "receive.h"
+#include "lirc/hardware.h"
+#include "lirc/lirc_log.h"
+#include "lirc/lircd_base.h"
+#include "lirc/receive.h"
 
 extern struct hardware hw;
 extern struct ir_remote *last_remote;

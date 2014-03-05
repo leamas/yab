@@ -29,7 +29,7 @@
 #include <ctype.h>
 
 #include "lirc.h"
-#include "config_file.h"
+#include "lirc/config_file.h"
 
 #define LINE_LEN 1024
 #define MAX_INCLUDES 10

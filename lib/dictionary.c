@@ -36,7 +36,7 @@
  * information retrieved from a configuration file (ini files).
  */
 
-#include "dictionary.h"
+#include "lirc/dictionary.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -7,63 +7,10 @@
 #undef LIRC_DRIVER_ANY
 #endif
 
-#include <stdio.h>
-#include "hardware.h"
-#include "hw-types.h"
-/* Hardware types */
-extern struct hardware hw_accent;
-extern struct hardware hw_alsa_usb;
-extern struct hardware hw_asusdh;
-extern struct hardware hw_atilibusb;
-extern struct hardware hw_atwf83;
-extern struct hardware hw_audio;
-extern struct hardware hw_audio_alsa;
-extern struct hardware hw_awlibusb;
-extern struct hardware hw_bte;
-extern struct hardware hw_bw6130;
-extern struct hardware hw_commandir;
-extern struct hardware hw_creative;
-extern struct hardware hw_creative_infracd;
-extern struct hardware hw_default;
-extern struct hardware hw_devinput;
-extern struct hardware hw_dfclibusb;
-extern struct hardware hw_dsp;
-extern struct hardware hw_dvico;
-extern struct hardware hw_ea65;
-extern struct hardware hw_ftdi;
-extern struct hardware hw_i2cuser;
-extern struct hardware hw_iguanaIR;
-extern struct hardware hw_irlink;
-extern struct hardware hw_irman;
-extern struct hardware hw_livedrive_midi;
-extern struct hardware hw_livedrive_seq;
-extern struct hardware hw_logitech;
-extern struct hardware hw_macmini;
-extern struct hardware hw_mouseremote;
-extern struct hardware hw_mouseremote_ps2;
-extern struct hardware hw_mp3anywhere;
-extern struct hardware hw_mplay;
-extern struct hardware hw_mplay2;
-extern struct hardware hw_pcmak;
-extern struct hardware hw_pinsys;
-extern struct hardware hw_pixelview;
-extern struct hardware hw_samsung;
-extern struct hardware hw_sb0540;
-extern struct hardware hw_silitek;
-extern struct hardware hw_slinke;
-extern struct hardware hw_srm7500libusb;
-extern struct hardware hw_tira;
-extern struct hardware hw_tira_raw;
-extern struct hardware hw_udp;
-extern struct hardware hw_uirt2;
-extern struct hardware hw_uirt2_raw;
-extern struct hardware hw_usb_uirt_raw;
-extern struct hardware hw_usbx;
+#include "lirc/hardware.h"
+#include "lirc/hw-types.h"
+#include "lirc/lirc_options.h"
 
-#ifndef HW_DEFAULT
-# define HW_DEFAULT hw_default
-# warning HW_DEFAULT is not defined
-#endif
 
 struct hardware hw_null = {
 	"/dev/null",		/* default device */

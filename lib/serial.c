@@ -33,8 +33,8 @@
 				   baudrates */
 #endif
 
-#include "lirc_log.h"
-#include "lircd_base.h"
+#include "lirc/lirc_log.h"
+#include "lirc/lircd_base.h"
 
 int tty_reset(int fd)
 {

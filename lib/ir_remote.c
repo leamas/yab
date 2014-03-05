@@ -23,9 +23,6 @@
 #include <sys/ioctl.h>
 
 #include "lirc.h"
-#include "ir_remote.h"
-#include "hardware.h"
-#include "release.h"
 
 struct ir_remote *decoding = NULL;
 

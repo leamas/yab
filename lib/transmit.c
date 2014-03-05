@@ -18,9 +18,9 @@
    signals and send the signal chain at a single blow */
 #define LIRCD_EXACT_GAP_THRESHOLD 10000
 
-#include "lirc_log.h"
-#include "lircd_base.h"
-#include "transmit.h"
+#include "lirc/lirc_log.h"
+#include "lirc/lircd_base.h"
+#include "lirc/transmit.h"
 
 extern struct ir_remote *repeat_remote;
 struct sbuf send_buffer;

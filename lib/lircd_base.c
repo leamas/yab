@@ -60,7 +60,7 @@
 #if defined(__linux__)
 #include <linux/input.h>
 #include <linux/uinput.h>
-#include "input_map.h"
+#include "lirc/input_map.h"
 #endif
 
 #ifdef HAVE_SYSTEMD
@@ -84,8 +84,6 @@
 #endif
 
 #include "lirc.h"
-#include "config_file.h"
-#include "release.h"
 
 #define WHITE_SPACE " \t"
 

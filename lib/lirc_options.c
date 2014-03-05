@@ -17,9 +17,9 @@
 #include <stdlib.h>
 #include <linux/types.h>
 
-#include "ciniparser.h"
-#include "lircd_base.h"
-#include "lirc_options.h"
+#include "lirc/ciniparser.h"
+#include "lirc/lircd_base.h"
+#include "lirc/lirc_options.h"
 
 char* progname = "lircd";
 
