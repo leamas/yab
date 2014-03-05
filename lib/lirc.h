@@ -10,7 +10,7 @@
 #include "lirc_base.h"
 #include "lirc_log.h"
 #include "lircd_base.h"
-#include "lircd_options.h"
+#include "lirc_options.h"
 #include "config_file.h"
 #include "dump_config.h"
 #include "input_map.h"

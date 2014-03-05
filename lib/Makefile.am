@@ -9,6 +9,7 @@ liblirc_la_SOURCES          = config_file.c \
                               ir_remote.c \
 			      lirc_log.c \
 			      lircd_base.c \
+			      lirc_options.c \
                               receive.c  \
                               release.c \
                               serial.c \
@@ -29,6 +30,7 @@ lirc_include_HEADERS        = config_file.h \
 			      lirc_log.h \
 			      lirc_base.h \
 			      lircd_base.h \
+			      lirc_options.h \
 			      release.h \
                               receive.h \
                               serial.h \

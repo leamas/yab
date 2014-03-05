@@ -104,7 +104,6 @@ static __u32 repeat_max = REPEAT_MAX_DEFAULT;
 
 extern struct hardware hw;
 
-char *progname = "lircd";
 const char *configfile = NULL;
 #ifndef USE_SYSLOG
 char *logfile = LOGFILE;

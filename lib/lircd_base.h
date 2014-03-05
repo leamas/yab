@@ -13,6 +13,7 @@
 #include <sys/time.h>
 
 #include "ir_remote.h"
+#include "lirc_options.h"
 
 extern int debug;
 

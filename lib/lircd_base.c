@@ -122,11 +122,8 @@ static int repeat_fd = -1;
 static char *repeat_message = NULL;
 static __u32 repeat_max = REPEAT_MAX_DEFAULT;
 
-static const char* default_permissions = "666";
-
 extern struct hardware hw;
 
-char *progname = "lircd";
 const char *configfile = NULL;
 FILE *pidf;
 char *pidfile = PIDFILE;
