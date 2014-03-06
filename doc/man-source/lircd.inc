@@ -25,7 +25,7 @@ probably will change in future.
 If you're using the dev/input driver, you can use \fIname=STRING\fR or
 \fIphys=STRING\fR to select the device; lircd will look in /dev/input
 to find a device with a matching description. This is useful in case
-the device name isn't fixed. \fISTRING\fR may contain the '*' and '?' 
+the device name isn't fixed. \fISTRING\fR may contain the '*' and '?'
 wildcards and '\\' to mark them as literal.
 
 With the \-\-listen option you can let lircd listen for network
@@ -78,6 +78,14 @@ request will repeat the signal this many times. Also, if the number of
 repeats in a SEND_ONCE request exceeds this number, it will be
 replaced by this number.
 
+The --plugindir option sets the directory from which lircd loads it's
+userspace drivers. These are *.ko files, by default found in
+/usr/lib/lirc/plugins.
+
+The \-\-options\-file option changes the path for the file from which
+default values are read. It defaults to /etc/lirc/lirc_options.conf.
+See [FILES] below.
+
 [FILES]
 
 The config file for lircd is located in /etc/lirc/lircd.conf. lircd
@@ -87,4 +95,10 @@ depends on your system configuration where log messages will show up).
 You can make lircd reread its config file and reopen its log file by
 sending the HUP signal to the program. That way you can rotate old log
 files.
+
+0.9.1+ versions also supports an options file, by default located at
+/etc/lirc/lirc_options.conf. This is a simple ini-style file which
+accepts exactly the same options as lird do on the command line.
+Boolean values can be written as Yes/No or 1/0. E. g., a line like
+"debug = yes" will turn on debugging by default.
 

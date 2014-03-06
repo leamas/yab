@@ -1,5 +1,7 @@
 # Mostly auto-generated build cruft
 core*
+*.la
+*.lo
 *.patch
 *.tar.gz
 *.tar.bz2
@@ -10,6 +12,7 @@ core*
 */Makefile
 */*/Makefile
 */.deps
+*/.libs
 
 drivers/*/.deps
 drivers/*/.tmp_versions

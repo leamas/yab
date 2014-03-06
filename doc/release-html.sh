@@ -30,6 +30,8 @@ echo
 
 echo -n "Pass2:"
 for FILE in $FILES2; do
+    basename=`basename $FILE .html`
+    test -z "`find .. -name $basename`" && continue
     {
     echo -n " $FILE"
     cat $SOURCE_DIR/head.html > $DEST_DIR/$FILE
