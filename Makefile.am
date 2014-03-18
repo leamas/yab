@@ -6,7 +6,7 @@ ACLOCAL_AMFLAGS             = -I m4
 ## we need version 1.5 of automake for DIST_SUBDIRS to work and dist-bzip2.
 AUTOMAKE_OPTIONS = 1.5 check-news dist-bzip2
 
-EXTRA_DIST =  setup.sh setup-driver.sh setup.data data2setup.sh ANNOUNCE TODO
+EXTRA_DIST =  setup.sh setup-driver.sh setup-functions.sh setup.data data2setup.sh ANNOUNCE TODO
 
 ## daemons/ and tools/ should appear before doc/ for help2man to work.
 if SYSTEMD_INSTALL
@@ -27,7 +27,7 @@ SUBDIRS = drivers daemons tools doc $(SYSTEMD_DIR)
 
 ## !!! BIG WARNING: this needs to be tweaked a bit more !!! ##
 
-DISTCHECK_FLAGS = --with-driver=all --enable-sandboxed
+DISTCHECK_FLAGS = --with-driver=userspace --enable-sandboxed --sysconfdir=/tmp/etc
 DISTCHECK_CONFIGURE_FLAGS = ${DISTCHECK_FLAGS}
 DISTCHECK_LIGHT_FLAGS = --with-driver=none --enable-sandboxed
 
@@ -46,7 +46,7 @@ dist-hook:
 	(cd $(srcdir)/contrib/hal/ && ./gen-hal-fdi.pl)
 	for f in contrib remotes; do \
 		cp -pr $(srcdir)/$$f $(distdir)/$$f; done
-	git log >$(distdir)/ChangeLog
+	git log >$(distdir)/ChangeLog || :
 
 DISTCLEANFILES = configure.sh .setup.config
 
