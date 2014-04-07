@@ -29,6 +29,9 @@ endif
 
 SUBDIRS                     = lib daemons tools doc $(SYSTEMD_DIR) plugins
 
+pkgconfigdir                = $(libdir)/pkgconfig
+dist_pkgconfig_DATA         = lirc.pc lirc-driver.pc
+
 lirc_confdir                = $(sysconfdir)/lirc
 dist_lirc_conf_DATA         = lircd.conf lirc_options.conf lircmd.conf
 
@@ -43,9 +46,6 @@ m4dir                       = m4
 dist_m4_DATA                = m4/ac-path-kernel-source.m4
 
 # ----------------------------------------------------------------------
-
-setup-driver.sh: data2setup.sh setup.data
-	./data2setup.sh > setup-driver.sh
 
 dist-hook:
 	(cd $(srcdir)/contrib/hal/ && ./gen-hal-fdi.pl)
