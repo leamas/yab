@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
+# pylint: disable=invalid-name
+
 '''Synchronize patchset between RPM spec file and a build tree. '''
 
 import argparse
-import difflib
 import glob
 import os, os.path
 import re
@@ -11,7 +12,219 @@ import shutil
 import subprocess
 import sys
 
-_WORKDIR = 'patchbuild'
+
+class Backend(object):
+    ''' Responsible for setting up a build tree with the patch series and
+    to re-export the modified list of patches when those are imported to
+    specfile.
+    '''
+
+    RPMBUILD_BP_CMD = \
+        'rpmbuild -bp -D "_sourcedir {pwd}" -D "_builddir {builddir}" {spec}'
+    TEMP_SPEC = 'unpack.spec'
+
+    def __init__(self, workdir):
+        self.workdir = os.path.abspath(workdir)
+        paths = glob.glob(os.path.join(self.workdir, '*'))
+        paths = [p for p in paths \
+                 if not (p == 'patches' or p.endswith(self.TEMP_SPEC))]
+        self.builddir = paths[0]
+
+    def workdir_setup(self):
+        ''' Setup the work directory... '''
+        if os.path.exists(self.workdir):
+            shutil.rmtree(self.workdir)
+        os.makedirs(self.workdir)
+
+    def run_rpmbuild_bp(self, lines):
+        ''' Run rpmbuild -bp on the patched spec, implements export. '''
+        specfile = os.path.join(self.workdir, self.TEMP_SPEC)
+        with open(specfile, 'w') as f:
+            f.write("".join(lines))
+        cmd = self.RPMBUILD_BP_CMD
+        cmd = cmd.format(pwd=os.getcwd(),
+                         builddir=self.workdir,
+                         spec=specfile)
+        print("Running: " + cmd)
+        subprocess.check_call(cmd, shell=True)
+
+    def export(self, spec_lines, spec_patches):
+        ''' Given a copy of the spec file lines + parsed patches, implement
+        the 'export' command.
+        '''
+        self.workdir_setup()
+        bp_lines = self.bp_specfile(spec_lines, spec_patches)
+        self.run_rpmbuild_bp(bp_lines)
+
+    def do_bp_specfile(self, spec_lines, patches, patch_func):
+        ''' Return a spec file with all %patchX replaced with actual
+        patch apply commands so that rpmbuild -bp works as intended.
+        '''
+        for ix in range(len(spec_lines)):
+            line = spec_lines[ix]
+            if line.strip().lower().startswith('%patch'):
+                patch, msg = _patch_by_regex_in_string(patches,
+                                                       '%patch([0-9]+)',
+                                                       line)
+                if not patch:
+                    print("Cannot parse %patch line: " + msg)
+                    continue
+                patch_func(spec_lines, ix, patch)
+        return spec_lines
+
+    def check_environ(self, args):
+        ''' Check environment before using backend tool. '''
+        pass
+
+    def bp_specfile(self, spec_lines, patches):
+        ''' Return a spec file with all %patchX replaced with actual
+        patch apply commands so that rpmbuild -bp works correct.
+        '''
+        pass   # abstract
+
+    def reset(self, args):     # pylint: disable=no-self-use,unused-argument
+        ''' Reset existing patchset and generate a new from SCM repo. '''
+        print('Command "reset" is not implemented in this mode')
+
+
+class QuiltBackend(Backend):
+    ''' Quilt backend implementation. '''
+
+    QUILT_IMPORT = "quilt --quiltrc - import {path}; quilt --quiltrc - push\n"
+
+    def bp_specfile(self, spec_lines, patches):
+
+        def patchline(spec_lines, ix, patch):
+            ''' Patch line ix in spec to apply quilt patch. '''
+            spec_lines[ix] = self.QUILT_IMPORT.format(path=patch.path)
+
+        os.environ['QUILT_PATCHES'] = os.path.join(self.workdir, 'patches')
+        return self.do_bp_specfile(spec_lines, patches, patchline)
+
+    def get_patches(self):
+        ''' Return build tree patch list. '''
+        patches = []
+        paths = glob.glob(self.workdir + "/patches/series")
+        if len(paths) != 1:
+            print("Error: cannot locate series file (problems ahead).")
+            series = []
+        else:
+            with open(paths[0]) as f:
+                series = f.readlines()
+            series = [s.strip() for s in series]
+        for p in glob.glob(self.workdir + "/patches/*"):
+            if p.endswith('/series'):
+                continue
+            patch = BuildPatch(p)
+            if patch.basename in series:
+                patches.append(BuildPatch(p))
+        return patches
+
+    def check_environ(self, args):
+        if not os.path.exists(os.path.join(self.workdir, 'patches')):
+            os.mkdir(os.path.join(self.workdir, 'patches'))
+
+
+class GitBackend(Backend):
+    ''' Indeed: git backend implementation. '''
+
+    GIT_APPLY = "git am {path}\n"
+    GIT_INIT = 'git init; git add .; git commit -aqm "Initial state"'
+
+    def bp_specfile(self, spec_lines, patches):
+
+        def patchline(spec_lines, ix, patch):
+            ''' Patch line ix in spec to apply quilt patch. '''
+            nonlocal inited
+            git_apply_patch = self.GIT_APPLY.format(path=patch.path)
+            if not inited:
+                spec_lines[ix] = self.GIT_INIT + ';' + git_apply_patch
+                inited = True
+            else:
+                spec_lines[ix] = git_apply_patch
+
+        inited = False
+        return self.do_bp_specfile(spec_lines, patches, patchline)
+
+    def get_patches(self):
+        ''' Return build tree patch list. '''
+
+        patches = []
+        tempspec = os.path.join(self.workdir, 'self.TEMP_SPEC')
+        if os.path.exists(tempspec):
+            os.unlink(tempspec)
+        for p in glob.glob(self.workdir + "/patches/*"):
+            patches.append(BuildPatch(p))
+        return patches
+
+    def export(self, spec_lines, spec_patches):
+        ''' Overrides Backend.export. '''
+        Backend.export(self, spec_lines, spec_patches)
+        if not os.path.exists(os.path.join(self.workdir, 'patches')):
+            os.makedirs(os.path.join(self.workdir, 'patches'))
+        for patch in spec_patches:
+            dest = os.path.join(self.workdir, 'patches', patch.basename)
+            shutil.copyfile(patch.path, dest)
+
+    def run_rpmbuild_bp(self, lines):
+        ''' Overrides Backend.run_rpmbuild_bp. '''
+
+        git_finish = "cd {wd}; git reset -q || :; git checkout -q . || :"
+        Backend.run_rpmbuild_bp(self, lines)
+        try:
+            subprocess.call(git_finish.format(wd=self.builddir), shell=True)
+        except subprocess.CalledProcessError:
+            pass
+
+    def reset(self, args):
+        try:
+            shutil.rmtree(os.path.join(self.workdir, 'patches'))
+        except FileNotFoundError:
+            pass
+        os.environ['GIT_DIR'] = os.path.join(self.builddir, '.git')
+        patchdir = os.path.join(args.working_dir, 'patches')
+        first = subprocess.check_output(
+            "git log --pretty=format:%h  --reverse | sed -n '2p'",
+            shell=True,
+            universal_newlines=True).strip()
+        cmd = 'git format-patch -o {patchdir} {first}..HEAD'
+        subprocess.check_call(cmd.format(first=first, patchdir=patchdir),
+                              shell=True)
+
+
+class Patch(object):
+    ''' Base class for all patches. '''
+
+    def __init__(self, path):
+        self.path = os.path.abspath(path.strip())
+        self.basename = os.path.basename(path)
+        with open(self.path, 'r', errors='ignore') as f:
+            self.lines = f.readlines()
+        self.nr = -1
+
+    def diff_equals(self, other):
+        ''' Return True if diff in this and other patch is the same. '''
+        set1 = set(self.lines)
+        set2 = set(other.lines)
+        return len(set1 - set2) == 0
+
+
+class SpecPatch(Patch):
+    ''' A patch defined in a spec. '''
+
+    def __init__(self, line):
+        ''' Setup a new patch with given name and path. '''
+        name, path = line.split(':')
+        Patch.__init__(self, path.strip())
+        self.name = name
+        self.nr = int(self.name.lower().strip().replace('patch', ''))
+
+
+class BuildPatch(Patch):
+    ''' A patch in the build directory. '''
+
+    def __init__(self, path):
+        Patch.__init__(self, path)
 
 
 def _patch_by_regex_in_string(patches, regex, string):
@@ -29,32 +242,14 @@ def _patch_by_regex_in_string(patches, regex, string):
     return found[0], None
 
 
-def _update_patches(patches, line):
-    ''' Update correct patch in patches with %patch line info. '''
-    match = re.search('patch([0-9])', line)
-    if not match:
-        print("Cannot parse %patch line: " + line)
-        return
-    nr = int(match.group(1))
-    pattern = "patch%s:" % nr
-    found = [p for p in patches if p.nr == nr]
-    if not found:
-        print("Cannot find patch definition for: " + line)
-        return
-    if len(found) > 1:
-        print("Multiple patch definitions for: " + line + " (!)")
-        return
-    found[0].patch_line = line
-
-
 def _parse_arguments():
-    ''' Parse the command line, return an argparser. '''
+    ''' Parse the command line, return parsed arguments . '''
     parser = argparse.ArgumentParser()
-    parser.add_argument (
+    parser.add_argument(
         "command",
-        choices=['import', 'export', 'status'],
-        help="Required command: import, export or status")
-    parser.add_argument (
+        choices=['import', 'export', 'status', 'reset', 'version'],
+        help="Required command: import, export, status, reset or version")
+    parser.add_argument(
         "spec",
         help="Spec file [*.spec]",
         default="*.spec",
@@ -63,49 +258,44 @@ def _parse_arguments():
         "-m", "--mode",
         choices=['git', 'quilt'],
         help="Work in git or quilt mode [guessed]",
-        default="quilt")
+        default="guess")
     parser.add_argument(
-        "-d", "--delete",
-        help="Delete unused patches on import [False]",
-        default=False,
-        action="store_true")
+        "-w", "--working-dir",
+        help="Build directory [patchbuild]",
+        default="patchbuild")
     parser.add_argument(
         "-o", "--options",
-        help="Options to %%patch when importing new patches [-p1]")
+        help="Options to %%patch when importing new patches [-p1]",
+        default='-p1')
     args = parser.parse_args()
-    if '*' in args.spec:
-        matched = glob.glob(args.spec)
-        if len(matched) == 0:
-            print("No spec file matching %s found" % args.spec)
-            sys.exit(1)
-        elif len(matched) > 1:
-            print("Multiple spec files matching %s found" % args.spec)
-            sys.exit(1)
-        else:
-            args.spec = matched[0]
+    matched = glob.glob(args.spec)
+    if args.command == 'version':
+        print("rpmdev-patchbuild $Format:%h %ci$")
+        sys.exit(0)
+    if len(matched) == 0:
+        print("Error: No spec file matching %s found" % args.spec)
+        sys.exit(1)
+    elif len(matched) > 1:
+        print("Error: Multiple spec files matching %s" % args.spec)
+        sys.exit(1)
+    else:
+        args.spec = matched[0]
     return args
 
 
-def parse_spec(path):
-    ''' Read the spec, returns the patches as a list. '''
+def _parse_spec(path):
+    ''' Read the spec, returns contents + the patches as a list. '''
 
-    comments = []
     patches = []
     with open(path, 'r') as f:
         lines = f.readlines()
     for l in lines:
         if re.match('^patch[0-9]+:', l.strip().lower()):
-            patches.append(SpecPatch(l, comments))
-        elif l.strip().lower().startswith('%patch'):
-            _update_patches(patches, l)
-        elif l.strip().startswith('#'):
-            comments.append(l)
-        else:
-            comments = []
+            patches.append(SpecPatch(l))
     return lines, patches
 
 
-def check_status(new_patches, spec_patches):
+def _check_status(new_patches, spec_patches):
     ''' Compute state in new patches by comparing with spec_patches. '''
 
     status = {}
@@ -131,161 +321,196 @@ def check_status(new_patches, spec_patches):
             status['dirty'].append(s)
     for n in new_by_basename:
         if not n in spec_by_basename:
-            status['new'].append(s)
+            status['new'].append(n)
     return status
 
 
-def print_status(status):
+def _print_status(backend, spec_patches, args):
     ''' Do the actual print part of the status command. '''
+
+    if not os.path.exists(args.working_dir):
+        print("No working directory. Use 'export' command to initialize.")
+        return
+    new_patches = backend.get_patches()
+    status = _check_status(new_patches, spec_patches)
     if status['deleted']:
         print('\nUnused:')
-        print('    ' + '\n    '.join(status['deleted']))
+        print('    ' + '\n    '.join(sorted(status['deleted'])))
     if status['new']:
         print('\nNew:')
-        print('    ' + '\n    '.join(status['new']))
+        print('    ' + '\n    '.join(sorted(status['new'])))
     if status['dirty']:
         print('\nModified:')
-        print('    ' + '\n    '.join(status['dirty']))
+        print('    ' + '\n    '.join(sorted(status['dirty'])))
     if status['clean']:
         print('\nUnmodified:')
-        print('    ' + '\n    '.join(status['clean']))
+        print('    ' + '\n    '.join(sorted(status['clean'])))
 
 
-class Backend(object):
-
-    RPMBUILD_BP_CMD = \
-        'rpmbuild -bp -D "_sourcedir {pwd}" -D "_builddir {builddir}" {spec}'
-
-    def workdir_setup(self, workdir, patches):
-        ''' Setup the work directory... '''
-        if os.path.exists(workdir):
-            shutil.rmtree(workdir)
-        os.makedirs(workdir)
-        self.workdir = workdir
-
-    def run_rpmbuild_bp(self, lines):
-        ''' Run rpmbuild -bp on the patched spec, implements export. '''
-        os.environ["QUILT_PATCHES"] = 'patches'
-        specfile = os.path.join(self.workdir, 'tmp.spec')
-        with open(specfile, 'w') as f:
-            f.write("".join(lines))
-        cmd = self.RPMBUILD_BP_CMD
-        cmd = cmd.format(pwd = os.getcwd(),
-                         builddir = os.path.abspath(self.workdir),
-                         spec = specfile)
-        print("Running: " + cmd)
-        subprocess.check_call(cmd, shell=True)
-
-    def export(self, workdir, spec_lines, spec_patches):
-        ''' Given a copy of the spec file lines + parsed patches, implement
-        the 'export' command.
-        '''
-        self.workdir_setup(workdir, spec_patches)
-        bp_lines = self.bp_specfile(spec_lines, spec_patches)
-        self.run_rpmbuild_bp(bp_lines)
-
-    def do_bp_specfile(self, spec_lines, patches, patch_func):
-        ''' Return a spec file with all %patchX replaced with actual
-        patch apply commands so that rpmbuild -bp works correct.
-        '''
-        for ix in range(len(spec_lines)):
-            line = spec_lines[ix]
-            if line.strip().lower().startswith('%patch'):
-                patch, msg = _patch_by_regex_in_string(patches,
-                                                       '%patch([0-9]+)',
-                                                       line)
-                if not patch:
-                    print("Cannot parse %patch line: " + msg)
-                    continue
-                patch_func(spec_lines, ix, patch)
-        return spec_lines
+def _find_ix(lines, regex):
+    ''' Return index of first regex match in lines or -1 on error '''
+    for ix in range(len(lines)):
+        try:
+            if re.search(regex, lines[ix], re.IGNORECASE):
+                return ix
+        except re.error:
+            continue
+    return -1
 
 
-class QuiltBackend(Backend):
+def _insert_patch(spec_lines, spec_patches, new, args):
+    ''' Insert patch at proper location in spec. '''
 
-    QUILT_IMPORT = "quilt --quiltrc - import {path}; quilt --quiltrc - push\n"
+    nr_warning = "Warning: cannot use patch number {}, using {}"
+    last = -1
+    for p in spec_patches:
+        if p.nr > last:
+            last = p.nr
+    my_nr = last + 1
 
-    def bp_specfile(self, spec_lines, patches):
-        ''' Return a spec file with all %patchX replaced with actual
-        patch apply commands so that rpmbuild -bp works correct.
-        '''
+    match = re.match('^([0-9]+).*', new.basename)
+    if match:
+        want_nr = int(match.group(1))
+        numbers = [p.nr for p in spec_patches]
+        if want_nr in numbers:
+            print(nr_warning.format(want_nr, my_nr))
+        else:
+            my_nr = want_nr
 
-        def patchline(spec_lines, ix, patch):
-            ''' Patch line ix in spec to apply quilt patch. '''
-            spec_lines[ix] = self.QUILT_IMPORT.format(path=patch.path)
+    with open(new.basename, 'w') as f:
+        f.write(''.join(new.lines))
 
-        return self.do_bp_specfile(spec_lines, patches, patchline)
+    ix = _find_ix(spec_lines, 'Patch{!s}'.format(last))
+    if ix == -1:
+        print("Error: Cannot find last Patch: ")
+        return
+    line = "Patch{!s}:     {}\n".format(my_nr, new.basename)
+    spec_lines.insert(ix, line)
 
-    def get_patches(self):
-        ''' Return build tree patch list. '''
-        patches = []
-        # TODO: Filter out what's not in series
-        for p in glob.glob(self.workdir + "/*/patches/*"):
-            if p.endswith('/series'):
+    ix = _find_ix(spec_lines, '%patch{!s}'.format(last))
+    if ix == -1:
+        print("Error: Cannot find last %patch: ")
+        return
+    line = '%patch{!s} {}\n'.format(my_nr, args.options)
+    spec_lines.insert(ix, line)
+
+    tagline = "Patch{!s}:    {}".format(my_nr, new.basename)
+    spec_patches.append(SpecPatch(tagline))
+
+
+def _kill_patch(spec_lines, victim):
+    ''' Comment out given victim patch in spec file. '''
+    state = 1
+    for ix in range(len(spec_lines)):
+        if state == 1:
+            match = re.search('[^#]*Patch([0-9]+).*' + victim.basename,
+                              spec_lines[ix])
+            if match:
+                spec_lines[ix] = '# (unused) ' +  spec_lines[ix]
+                nr = match.group(1)
+                state = 2
                 continue
-            with open(p, 'r') as f:
-               lines = f.readlines()
-            patches.append(BuildPatch(p, lines))
-        return patches
+        elif state == 2:
+            match = re.search('[^#]*%Patch' + nr,
+                              spec_lines[ix],
+                              re.IGNORECASE)
+            if match:
+                spec_lines[ix] = '# (unused) ' +  spec_lines[ix]
+                return
+    print("Error: disable patch: " + victim.basename)
 
 
-class Patch(object):
-   ''' Base class for all patches, s simple thing. '''
-
-   def __init__(self, path):
-        self.path = os.path.abspath(path.strip())
-        self.basename = os.path.basename(path)
-        with open(self.path, 'r') as f:
-            self.lines = f.readlines()
-        self.state = None
-        self.nr = -1
-
-   def diff_equals(self, other):
-       ''' Return True if diffs in this and other patch is the same. '''
-       set1 = set(self.lines)
-       set2 = set(other.lines)
-       return len(set1 - set2) == 0
-
-class SpecPatch(Patch):
-    ''' A patch defined in a spec. '''
-
-    def __init__(self, line, comments=None):
-        ''' Setup a new patch with given name and path. '''
-        name, path = line.split(':')
-        Patch.__init__(self, path.strip())
-        self.name = name
-        self.comments = comments
-        self.tag_line = line
-        self.patch_line = None
-        self.nr = int(self.name.lower().strip().replace('patch',''))
-
-    def update(self, line):
-        ''' Update patch with data from the %patchX line. '''
-        self.patch_line = line
+def _copy_patch(basename, spec_patches, new_patches):
+    ''' Copy contents from new patch p to spec_patches' patch with
+    same name.
+    '''
+    try:
+        spec = [p for p in spec_patches if p.basename == basename][0]
+    except KeyError:
+        print("Error: No existing spec patch with name: " + basename)
+        return
+    try:
+        new = [p for p in new_patches if p.basename == basename][0]
+    except KeyError:
+        print("Error: No new spec patch with name: " + basename)
+        return
+    shutil.copyfile(new.path, spec.path)
 
 
-class BuildPatch(Patch):
-    ''' A patch in the build directory. '''
+def _import_patches(backend, args, spec_lines, spec_patches):
+    ''' Fetch patches from backend and update spec. '''
 
-    def __init__(self, path, lines):
-        Patch.__init__(self, path)
+    new_patches = backend.get_patches()
+    status = _check_status(new_patches, spec_patches)
+    all_patches = spec_patches.copy()
+    for name in status['new']:
+        found = [p for p in new_patches if p.basename == name]
+        all_patches.append(found[0])
+    for patch in all_patches:
+        if patch.basename in status['clean']:
+            continue
+        elif patch.basename in status['dirty']:
+            _copy_patch(patch.basename, spec_patches, new_patches)
+        elif patch.basename in status['deleted']:
+            _kill_patch(spec_lines, patch)
+        elif patch.basename in status['new']:
+            _insert_patch(spec_lines, spec_patches, patch, args)
+        else:
+            print("Error: no status for " + patch.basename)
+
+    with open(args.spec, 'w') as f:
+        f.write(''.join(spec_lines))
+
+
+def _get_backend(args):
+    ''' Try to find out what backend to use and return it. '''
+
+    LIST_PATCHES = ["spectool", "-P", "-l", args.spec]
+    if args.mode == 'guess':
+        try:
+            patchlines = subprocess.check_output(LIST_PATCHES,
+                                                 universal_newlines=True)
+        except (OSError, subprocess.CalledProcessError):
+            print("Warning: cannot run spectool, falling back to quilt mode.")
+            args.mode = 'quilt'
+        else:
+            args.mode = 'git'
+            patchlines = patchlines.split('\n')
+            patchlines = [(p.split(':'))[1].strip() for p in patchlines if p]
+            for patch in patchlines:
+                with open(patch, 'r') as f:
+                    lines = f.readlines()
+                if not lines[0].startswith('From '):
+                    args.mode = 'quilt'
+                    break
+                if not re.match('From [0-9a-f]{30,}', lines[0]):
+                    args.mode = 'quilt'
+                    break
+    if args.mode == 'git':
+        return GitBackend(args.working_dir)
+    else:
+        return QuiltBackend(args.working_dir)
 
 
 def main():
     ''' Indeed: main program. '''
     args = _parse_arguments()
-    backend = QuiltBackend()
-    spec_lines, spec_patches = parse_spec(args.spec)
+    backend = _get_backend(args)
+    backend.check_environ(args)
+    spec_lines, spec_patches = _parse_spec(args.spec)
     if args.command == 'export':
-        backend.export(_WORKDIR, spec_lines.copy(), spec_patches)
+        backend.export(spec_lines.copy(), spec_patches)
+    elif args.command == 'reset':
+        backend.reset(args)
     elif args.command == 'status':
-        new_patches = backend.get_patches()
-        status = check_status(new_patches, spec_patches)
-        print_status(status)
+        _print_status(backend, spec_patches, args)
+    elif args.command == 'import':
+        _import_patches(backend, args, spec_lines, spec_patches)
+    else:
+        print("Oops...")
 
 
 if __name__ == "__main__":
     main()
 
 # vim: set expandtab: ts=4:sw=4:
-
