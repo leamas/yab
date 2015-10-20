@@ -1,0 +1,105 @@
+.TH RPMDEV-PATCHBUILD "1" "Last change: Aug 2015" "rpmdev-pathcbuild @VERSION" "User Commands"
+.SH NAME
+rpmdev-patchbuild - synchronize patch set between spec and source
+.SH SYNOPSIS
+.B rpmdev-patchbuild [\fIoptions\fR] <\fIcommand\fR> [\fIspec file\fR]
+.SH DESCRIPTION
+\fIrpmdev-patchbuild\fR is designed to support the workflow when
+maintaining patches in RPM spec files. It can export existing
+patches to a build tree. This build tree can be modified with new
+or updated patches. Eventually, the patches in the spec file can
+be updated (i. e., replaced) with the patches in the build tree.
+.SH ARGUMENTS
+The \fIcommand\fR argument is one of
+.RS 4
+.TP
+\fBexport\fR
+Retrieves the sources as defined in the spec file and unpacks them into
+a build tree. The patches in the spec are applied as a patch series in this
+tree.
+.TP
+\fBimport\fR
+Import the patches from the build tree. The patches in the spec file are
+replaced with the patches from build tree.
+.TP
+\fBstatus\fR
+Display the patch status. A patch can be deleted, new, modified or
+unchanged. A new patch might conflict if using a numeric prefix used
+by another patch
+.RE
+.TP
+\fBspec file\fR
+The spec file to use. Defaults to a *.spec (which must match a single
+file to work).
+
+.SH OPTIONS
+.TP
+\fB\-m\fR ,\fB\-\-mode\fR [\fIgit\fR|\fIquilt\fR]
+
+Work either in  git or quilt mode.
+.IP
+In git mode the build tree will be initiated with a \fIgit(1)\fR
+repository, and each patch in the spec will be applied using
+\fIgit am\fR. Requires that all spec patches are git-formatted.
+This mode is used by default if all patches in the spec are deemed
+as git patches according to some heuristics.
+.IP
+In quilt mode the build tree will be initiated with a \fIquilt(1)\fR
+patchset. This mode can always be used, it does not parse or generate
+any patch metadata. It also leaves patch naming inclusive numbering
+to the user. Quilt mode is used by default if at least one patch is
+deemed as non-git.
+.TP
+\fB-d\fR,\fB\-\-delete\fR
+When importing patches to spec, delete unused ones. By default
+patches are lefft in spec wit a message that they are unused.
+.TP
+\fB-o\fR,\fB\-\-options\fR
+Options used with  %patch when importing new patches. Defaults to
+\fI-p1\fR. Existing %patch invocations are used as-is.
+.TP
+\fB-w\fR,\fB\-\-working-dir\fR
+Build directory where sources are unpacked. Defaults to \fIpatchbuild\fr.
+.TP
+\fB\-h\fR,\fB\-\-help\fR
+Display usage summary.
+.TP
+\fB\-v\fR,\fB\-\-version\fR
+Display version.
+
+.SH PATCH NUMBERING
+When imported a new patch must be designated a number. If the patch
+filename doesnt have a numeric prefix the next available number is
+used. It the patch has a numeric prefix it will be used unless it's
+already used in the spec. In this case there is a warning and next
+available number is used.
+
+.SH EXAMPLES
+A session using \fBrpmdev-patchbuild\fR might look like:
+.nf
+    $ fedpkg clone foo
+    $ cd foo
+    $ rpmdev-patchbuild export
+    $ cd patchbuild/foo-1.0.3
+    < patch the code and update patches>
+    $ cd ../..
+    $ rpmdev-patchbuild status
+    $ rpmdev-patchbuild import
+    $ rpmbuild -D "_sourcedir $PWD" -ba *.spec
+    < patch broken... fix in patchbuild/foo-1.0.3>
+    $ rpmdev-patchbuild import
+    $ rpmbuild -D "_sourcedir $PWD" -ba *.spec
+    <all OK, commit changes in main git repo>
+    $ git commit -am "foo fixed with new patches"
+.fi
+
+.SH FILES
+TBD
+
+.SH SEE ALSO
+
+quilt(1)
+.br
+git(1)
+.br
+rpmbuild(1)
