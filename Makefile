@@ -2,8 +2,10 @@ all: README.html
 
 
 
-README.html: rpmdev-patchbuild.1
-	man2html $? > $@
+README.md: README.header rpmdev-patchbuild.1 Makefile
+	cp README.header $@
+	man2html -H linux.die.net -M /man rpmdev-patchbuild.1 | \
+	    sed -e '/Content-type/d'  -e '/HREF=/s|\?1+|/1/|'>> $@
 
 pylint: .phony
 	-python3-pylint --rcfile pylint.conf rpmdev-patchbuild

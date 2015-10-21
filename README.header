@@ -1,0 +1,32 @@
+rpmdev-patchbuild README
+========================
+
+rpmbuild-patchbuild is a simple script which synchronizes the patches
+in a RPM specfile and a build tree. The idea is to simplify the
+workflow
+  - Unpacking the sources.
+  - Apply existing patches to sources without losing history, so
+    the patches are available for updating.
+  - Modify sources.
+  - Create new patches.
+  - Update patches in the Makefile.
+  - Rebuild.
+
+Dependencies
+============
+
+You need at least git, quilt and rpmdev-tools.
+
+Installation
+============
+
+None. Just run the script, possibly after dropping it somewhere in
+your path.
+
+The manpage could be viewed using nroff -man rpmdev-pathcbuild
+
+Ah, the manpage:
+
+<hr>
+
+
