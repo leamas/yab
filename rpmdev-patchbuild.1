@@ -80,13 +80,29 @@ available number is used.
 .SH GIT USAGE NOTES
 \fBrpmdev-patchbuild\fR does not import the git repo directly, it
 uses the \fIpatchbuild/patches\fR directory. One way to feed it
-is to just invoke something like \fIgit format-patch --start-number 7
--o ../patches HEAD^..HEAD\fR. This gives user fine-grained control over
+is to just invoke something like \fIgit format-patch \-\-start-number 7
+ \-o ../patches HEAD^..HEAD\fR. This gives user fine-grained control over
 the patches imported. The alternative is to use the \fIreset\fR command
 which generates a fresh, re-numbered patchset in ../patches.
 .P
 In git mode all changes done by %prep besides the actual patching is
 discarded by \fIexport\fR.
+
+.SH SPEC FILE MODIFICATIONS
+Updating an existing patch does not affect the spec file, only the contents
+of the patch file.
+.P
+When deleting a patch the corresponding entry in the spec is commented
+out.
+.P
+When inserting a new patch, the \fIPatch:\fR tag line and the \fI%patch\fR
+is inserted ordered to existing lines. If there is no existing patch the
+tag line is inserted after the last Source: and the patch line after %setup.
+.P
+Both deleted and inserted patches creates fixes which looks ugly and needs
+some manual editing before committing.
+
+
 
 .SH EXAMPLES
 A session using \fBrpmdev-patchbuild\fR might look like:

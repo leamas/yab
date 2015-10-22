@@ -6,7 +6,8 @@
 
 import argparse
 import glob
-import os, os.path
+import os
+import os.path
 import re
 import shutil
 import subprocess
@@ -25,10 +26,14 @@ class Backend(object):
 
     def __init__(self, workdir):
         self.workdir = os.path.abspath(workdir)
+
+    @property
+    def builddir(self):
+        ''' Return path to unpacked sources under self.workdir. '''
         paths = glob.glob(os.path.join(self.workdir, '*'))
-        paths = [p for p in paths \
+        paths = [p for p in paths
                  if not (p == 'patches' or p.endswith(self.TEMP_SPEC))]
-        self.builddir = paths[0]
+        return paths[0] if paths else None
 
     def workdir_setup(self):
         ''' Setup the work directory... '''
@@ -56,24 +61,8 @@ class Backend(object):
         bp_lines = self.bp_specfile(spec_lines, spec_patches)
         self.run_rpmbuild_bp(bp_lines)
 
-    def do_bp_specfile(self, spec_lines, patches, patch_func):
-        ''' Return a spec file with all %patchX replaced with actual
-        patch apply commands so that rpmbuild -bp works as intended.
-        '''
-        for ix in range(len(spec_lines)):
-            line = spec_lines[ix]
-            if line.strip().lower().startswith('%patch'):
-                patch, msg = _patch_by_regex_in_string(patches,
-                                                       '%patch([0-9]+)',
-                                                       line)
-                if not patch:
-                    print("Cannot parse %patch line: " + msg)
-                    continue
-                patch_func(spec_lines, ix, patch)
-        return spec_lines
-
-    def check_environ(self, args):
-        ''' Check environment before using backend tool. '''
+    def init(self, args):
+        ''' General setup done on every run. '''
         pass
 
     def bp_specfile(self, spec_lines, patches):
@@ -99,7 +88,7 @@ class QuiltBackend(Backend):
             spec_lines[ix] = self.QUILT_IMPORT.format(path=patch.path)
 
         os.environ['QUILT_PATCHES'] = os.path.join(self.workdir, 'patches')
-        return self.do_bp_specfile(spec_lines, patches, patchline)
+        return _do_bp_specfile(spec_lines, patches, patchline)
 
     def get_patches(self):
         ''' Return build tree patch list. '''
@@ -115,12 +104,12 @@ class QuiltBackend(Backend):
         for p in glob.glob(self.workdir + "/patches/*"):
             if p.endswith('/series'):
                 continue
-            patch = BuildPatch(p)
+            patch = Patch(p)
             if patch.basename in series:
-                patches.append(BuildPatch(p))
+                patches.append(patch)
         return patches
 
-    def check_environ(self, args):
+    def init(self, args):
         if not os.path.exists(os.path.join(self.workdir, 'patches')):
             os.mkdir(os.path.join(self.workdir, 'patches'))
 
@@ -134,7 +123,7 @@ class GitBackend(Backend):
     def bp_specfile(self, spec_lines, patches):
 
         def patchline(spec_lines, ix, patch):
-            ''' Patch line ix in spec to apply quilt patch. '''
+            ''' Patch line ix in spec to git am patch. '''
             nonlocal inited
             git_apply_patch = self.GIT_APPLY.format(path=patch.path)
             if not inited:
@@ -144,7 +133,7 @@ class GitBackend(Backend):
                 spec_lines[ix] = git_apply_patch
 
         inited = False
-        return self.do_bp_specfile(spec_lines, patches, patchline)
+        return _do_bp_specfile(spec_lines, patches, patchline)
 
     def get_patches(self):
         ''' Return build tree patch list. '''
@@ -154,7 +143,7 @@ class GitBackend(Backend):
         if os.path.exists(tempspec):
             os.unlink(tempspec)
         for p in glob.glob(self.workdir + "/patches/*"):
-            patches.append(BuildPatch(p))
+            patches.append(Patch(p))
         return patches
 
     def export(self, spec_lines, spec_patches):
@@ -184,7 +173,7 @@ class GitBackend(Backend):
         os.environ['GIT_DIR'] = os.path.join(self.builddir, '.git')
         patchdir = os.path.join(args.working_dir, 'patches')
         first = subprocess.check_output(
-            "git log --pretty=format:%h  --reverse | sed -n '2p'",
+            "git log --pretty=format:%h  --reverse | head -1",
             shell=True,
             universal_newlines=True).strip()
         cmd = 'git format-patch -o {patchdir} {first}..HEAD'
@@ -218,13 +207,6 @@ class SpecPatch(Patch):
         Patch.__init__(self, path.strip())
         self.name = name
         self.nr = int(self.name.lower().strip().replace('patch', ''))
-
-
-class BuildPatch(Patch):
-    ''' A patch in the build directory. '''
-
-    def __init__(self, path):
-        Patch.__init__(self, path)
 
 
 def _patch_by_regex_in_string(patches, regex, string):
@@ -268,10 +250,10 @@ def _parse_arguments():
         help="Options to %%patch when importing new patches [-p1]",
         default='-p1')
     args = parser.parse_args()
-    matched = glob.glob(args.spec)
     if args.command == 'version':
         print("rpmdev-patchbuild $Format:%h %ci$")
         sys.exit(0)
+    matched = glob.glob(args.spec)
     if len(matched) == 0:
         print("Error: No spec file matching %s found" % args.spec)
         sys.exit(1)
@@ -295,22 +277,31 @@ def _parse_spec(path):
     return lines, patches
 
 
+def _do_bp_specfile(spec_lines, patches, patch_func):
+    ''' Return a spec file with all %patchX replaced with actual
+    patch apply commands so that rpmbuild -bp works as intended.
+    '''
+    for ix in range(len(spec_lines)):
+        line = spec_lines[ix]
+        if line.strip().lower().startswith('%patch'):
+            patch, msg = _patch_by_regex_in_string(patches,
+                                                   '%patch([0-9]+)',
+                                                   line)
+            if not patch:
+                print("Cannot parse %patch line: " + msg)
+                continue
+            patch_func(spec_lines, ix, patch)
+    return spec_lines
+
+
 def _check_status(new_patches, spec_patches):
     ''' Compute state in new patches by comparing with spec_patches. '''
 
-    status = {}
-    status['clean'] = []
-    status['dirty'] = []
-    status['deleted'] = []
-    status['new'] = []
-    new_by_basename = {}
-    for n in new_patches:
-        new_by_basename[n.basename] = n
-    spec_by_basename = {}
-    for s in spec_patches:
-        spec_by_basename[s.basename] = s
+    status = {state: [] for state in ['clean', 'dirty', 'deleted', 'new']}
+    new_by_basename = {n.basename: n for n in new_patches}
+    spec_by_basename = {s.basename: s for s in spec_patches}
     for s in spec_by_basename.keys():
-        if not s in new_by_basename:
+        if s not in new_by_basename:
             status['deleted'].append(s)
             continue
         spec_patch = spec_by_basename[s]
@@ -320,7 +311,7 @@ def _check_status(new_patches, spec_patches):
         else:
             status['dirty'].append(s)
     for n in new_by_basename:
-        if not n in spec_by_basename:
+        if n not in spec_by_basename:
             status['new'].append(n)
     return status
 
@@ -358,9 +349,8 @@ def _find_ix(lines, regex):
     return -1
 
 
-def _insert_patch(spec_lines, spec_patches, new, args):
-    ''' Insert patch at proper location in spec. '''
-
+def _get_new_patch_nr(new, spec_patches, new_patches):
+    ''' Return number to use for next patch. '''
     nr_warning = "Warning: cannot use patch number {}, using {}"
     last = -1
     for p in spec_patches:
@@ -371,30 +361,49 @@ def _insert_patch(spec_lines, spec_patches, new, args):
     match = re.match('^([0-9]+).*', new.basename)
     if match:
         want_nr = int(match.group(1))
-        numbers = [p.nr for p in spec_patches]
+        numbers = [p.nr for p in spec_patches
+                   if p.nr in [n.nr for n in new_patches]]
         if want_nr in numbers:
             print(nr_warning.format(want_nr, my_nr))
         else:
             my_nr = want_nr
+    return my_nr
 
-    with open(new.basename, 'w') as f:
-        f.write(''.join(new.lines))
 
-    ix = _find_ix(spec_lines, 'Patch{!s}'.format(last))
-    if ix == -1:
-        print("Error: Cannot find last Patch: ")
-        return
-    line = "Patch{!s}:     {}\n".format(my_nr, new.basename)
-    spec_lines.insert(ix, line)
+def _insert_patch(new, spec_lines, spec_patches, args):
+    ''' Insert patch at proper location in spec. '''
 
-    ix = _find_ix(spec_lines, '%patch{!s}'.format(last))
-    if ix == -1:
-        print("Error: Cannot find last %patch: ")
-        return
-    line = '%patch{!s} {}\n'.format(my_nr, args.options)
-    spec_lines.insert(ix, line)
+    def find_line(nr, num_re, stop_re):
+        ''' Return ix where to insert new line with nr 'nr', preferably
+        ordered according to num_re matches or (no matches) after the
+        stop_re match. '''
+        last_nr = 999999
+        last_ix = -1
+        for ix in reversed(range(len(spec_lines))):
+            match = re.search(num_re, spec_lines[ix], re.IGNORECASE)
+            if match:
+                found_nr = int(match.group(1))
+                if found_nr < nr:
+                    return ix + 1
+                elif found_nr < last_nr:
+                    last_nr = found_nr
+                    last_ix = ix
+            if re.search(stop_re, spec_lines[ix], re.IGNORECASE):
+                return ix + 1
+        return 0
 
-    tagline = "Patch{!s}:    {}".format(my_nr, new.basename)
+    tagline = "Patch{!s}:     {}\n".format(new.nr, new.basename)
+    ix = find_line(new.nr, '^\s*Patch([0-9]+)[^:]*:', '^\s*Source[0-9]+')
+    spec_lines.insert(ix, tagline)
+    if ix == 0:
+        print("Warning: Don't know where to put Patch:, inserting at top.")
+    patchline = '%patch{!s} {}\n'.format(new.nr, args.options)
+    ix = find_line(new.nr, '^\s*%patch([0-9]+)', '^\s*%setup')
+    spec_lines.insert(ix, patchline)
+    if ix == 0:
+        print("Warning: Don't know where to put %patch, inserting at top.")
+
+    shutil.copyfile(new.path, new.basename)
     spec_patches.append(SpecPatch(tagline))
 
 
@@ -406,7 +415,7 @@ def _kill_patch(spec_lines, victim):
             match = re.search('[^#]*Patch([0-9]+).*' + victim.basename,
                               spec_lines[ix])
             if match:
-                spec_lines[ix] = '# (unused) ' +  spec_lines[ix]
+                spec_lines[ix] = '# (unused) ' + spec_lines[ix]
                 nr = match.group(1)
                 state = 2
                 continue
@@ -415,7 +424,7 @@ def _kill_patch(spec_lines, victim):
                               spec_lines[ix],
                               re.IGNORECASE)
             if match:
-                spec_lines[ix] = '# (unused) ' +  spec_lines[ix]
+                spec_lines[ix] = '# (unused) ' + spec_lines[ix]
                 return
     print("Error: disable patch: " + victim.basename)
 
@@ -441,22 +450,21 @@ def _import_patches(backend, args, spec_lines, spec_patches):
     ''' Fetch patches from backend and update spec. '''
 
     new_patches = backend.get_patches()
+    new_patches = sorted(new_patches, key=lambda x: x.nr)
     status = _check_status(new_patches, spec_patches)
-    all_patches = spec_patches.copy()
-    for name in status['new']:
-        found = [p for p in new_patches if p.basename == name]
-        all_patches.append(found[0])
-    for patch in all_patches:
+    for patch in spec_patches:
         if patch.basename in status['clean']:
             continue
         elif patch.basename in status['dirty']:
             _copy_patch(patch.basename, spec_patches, new_patches)
         elif patch.basename in status['deleted']:
             _kill_patch(spec_lines, patch)
-        elif patch.basename in status['new']:
-            _insert_patch(spec_lines, spec_patches, patch, args)
         else:
             print("Error: no status for " + patch.basename)
+    for patch in new_patches:
+        if patch.basename in status['new']:
+            patch.nr = _get_new_patch_nr(patch, spec_patches, new_patches)
+            _insert_patch(patch, spec_lines, spec_patches, args)
 
     with open(args.spec, 'w') as f:
         f.write(''.join(spec_lines))
@@ -496,7 +504,7 @@ def main():
     ''' Indeed: main program. '''
     args = _parse_arguments()
     backend = _get_backend(args)
-    backend.check_environ(args)
+    backend.init(args)
     spec_lines, spec_patches = _parse_spec(args.spec)
     if args.command == 'export':
         backend.export(spec_lines.copy(), spec_patches)
