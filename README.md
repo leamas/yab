@@ -130,7 +130,7 @@ available number is used.
 <B>rpmdev-patchbuild</B> does not import the git repo directly, it
 uses the <I>patchbuild/patches</I> directory. One way to feed it
 is to just invoke something like <I>git format-patch --start-number 7
--o ../patches HEAD^..HEAD</I>. This gives user fine-grained control over
+<BR>&nbsp;-o&nbsp;../patches&nbsp;HEAD^..HEAD</I>.&nbsp;This&nbsp;gives&nbsp;user&nbsp;fine-grained&nbsp;control&nbsp;over
 the patches imported. The alternative is to use the <I>reset</I> command
 which generates a fresh, re-numbered patchset in ../patches.
 <P>
@@ -139,6 +139,27 @@ In git mode all changes done by %prep besides the actual patching is
 discarded by <I>export</I>.
 <P>
 <A NAME="lbAI">&nbsp;</A>
+<H2>SPEC FILE MODIFICATIONS</H2>
+
+Updating an existing patch does not affect the spec file, only the contents
+of the patch file.
+<P>
+
+When deleting a patch the corresponding entry in the spec is commented
+out.
+<P>
+
+When inserting a new patch, the <I>Patch:</I> tag line and the <I>%patch</I>
+is inserted ordered to existing lines. If there is no existing patch the
+tag line is inserted after the last Source: and the patch line after %setup.
+<P>
+
+Both deleted and inserted patches creates fixes which looks ugly and needs
+some manual editing before committing.
+<P>
+<P>
+<P>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLES</H2>
 
 A session using <B>rpmdev-patchbuild</B> might look like:
@@ -160,12 +181,12 @@ A session using <B>rpmdev-patchbuild</B> might look like:
 </PRE>
 
 <P>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>FILES</H2>
 
 TBD
 <P>
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <P>
@@ -188,14 +209,15 @@ TBD
 <DT><A HREF="#lbAF">OPTIONS</A><DD>
 <DT><A HREF="#lbAG">PATCH NUMBERING</A><DD>
 <DT><A HREF="#lbAH">GIT USAGE NOTES</A><DD>
-<DT><A HREF="#lbAI">EXAMPLES</A><DD>
-<DT><A HREF="#lbAJ">FILES</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">SPEC FILE MODIFICATIONS</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLES</A><DD>
+<DT><A HREF="#lbAK">FILES</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://linux.die.net/man">man2html</A>,
 using the manual pages.<BR>
-Time: 16:51:30 GMT, October 21, 2015
+Time: 10:13:56 GMT, October 22, 2015
 </BODY>
 </HTML>
