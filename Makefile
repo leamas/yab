@@ -1,4 +1,4 @@
-all: README.html
+all: README.md
 
 
 

@@ -63,11 +63,8 @@ class Backend(object):
         the 'export' command.
         '''
         self.workdir_setup()
-        if args.autosetup:
-            self.run_rpmbuild_bp(spec_lines, args)
-        else:
-            bp_lines = self.bp_specfile(spec_lines, spec_patches, args)
-            self.run_rpmbuild_bp(bp_lines, args)
+        bp_lines = self.bp_specfile(spec_lines, spec_patches, args)
+        self.run_rpmbuild_bp(bp_lines, args)
 
     def init(self, args):
         ''' General setup done on every run. '''
@@ -91,6 +88,7 @@ class QuiltBackend(Backend):
     QUILT_IMPORT = "quilt --quiltrc - import {path}; quilt --quiltrc - push\n"
 
     def bp_specfile(self, spec_lines, patches, args):
+        ''' Implements Backend.bp_specfile. '''
 
         def patchline(spec_lines, ix, patch):
             ''' Patch line ix in spec to apply quilt patch. '''
@@ -118,6 +116,28 @@ class QuiltBackend(Backend):
             if patch.basename in series:
                 patches.append(patch)
         return patches
+
+
+class AutosetupBackend(Backend):
+    ''' Autosetup backend implementation. '''
+
+    def bp_specfile(self, spec_lines, patches, args):
+        ''' Implements Backend.bp_specfile. '''
+        return spec_lines
+
+    def get_patches(self):
+        ''' Return build tree patch list. '''
+        pattern = os.path.join(self.patchdir, '*')
+        return [Patch(p) for p in glob.glob(pattern)]
+
+    def export(self, spec_lines, spec_patches, args):
+        ''' Overrides Backend.export. '''
+        Backend.export(self, spec_lines, spec_patches, args)
+        if not os.path.exists(self.patchdir):
+            os.makedirs(self.patchdir)
+        for patch in spec_patches:
+            dest = os.path.join(self.patchdir, patch.basename)
+            shutil.copyfile(patch.path, dest)
 
 
 class GitBackend(Backend):
@@ -168,8 +188,6 @@ class GitBackend(Backend):
 
         git_finish = "cd {wd}; git reset -q || :; git checkout -q . || :"
         Backend.run_rpmbuild_bp(self, lines, args)
-        if args.autosetup:
-            return
         try:
             subprocess.call(git_finish.format(wd=self.builddir), shell=True)
         except subprocess.CalledProcessError:
@@ -248,8 +266,8 @@ def _parse_arguments():
         nargs='?')
     parser.add_argument(
         "-m", "--mode",
-        choices=['git', 'quilt'],
-        help="Work in git or quilt mode [guessed]",
+        choices=['git', 'g', 'quilt', 'q', 'autosetup', 'a'],
+        help="Work in git, quilt or autosetup mode [guessed]",
         default="guess")
     parser.add_argument(
         "-w", "--working-dir",
@@ -277,6 +295,12 @@ def _parse_arguments():
         sys.exit(1)
     else:
         args.spec = matched[0]
+    if args.mode == 'a':
+        args.mode = 'autosetup'
+    elif args.mode == 'g':
+        args.mode = 'git'
+    elif args.mode == 'q':
+        args.mode = 'quilt'
     if args.autosetup and args.mode == 'guess':
         args.mode = 'git'
     elif args.autosetup and args.mode == 'quilt':
@@ -521,6 +545,8 @@ def _get_backend(args):
                     break
     if args.mode == 'git':
         return GitBackend(args.working_dir)
+    elif args.mode == 'autosetup':
+        return AutosetupBackend(args.working_dir)
     else:
         return QuiltBackend(args.working_dir)
 

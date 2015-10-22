@@ -89,11 +89,10 @@ file to work).
 <H2>OPTIONS</H2>
 
 <DL COMPACT>
-<DT><B>-m</B> ,<B>--mode</B> [<I>git</I>|<I>quilt</I>]<DD>
-Work either in  git or quilt mode. See QUILT MODE and GIT MODE.
-<DT><B>-a</B>,<B>--autosetup</B><DD>
-Don't update the <I>%patch</I> lines in the spec file, just the <I>Patch:</I>
-tag lines. See AUTOSETUP
+<DT><B>-m</B> ,<B>--mode</B> [<I>git</I>|<I>quilt</I>|<I>autosetup</I>]<DD>
+Work either in  git,  quilt or autosetup mode. See QUILT MODE, GIT MODE,
+and AUTOSETUP MODE. Modes can be abridged the first letter <I>g</I>,
+<I>q</I> and <I>a</I>.
 <DT><B>-o</B>,<B>--options</B><DD>
 Options used with  %patch when importing new patches. Defaults to
 <I>-p1</I>. Existing %patch invocations are used as-is.
@@ -109,7 +108,8 @@ Display version.
 <H2>QUILT MODE</H2>
 
 In quilt mode the build tree is initiated with a <I><A HREF="http://linux.die.net/man/1/quilt">quilt</A>(1)</I>
-patchset. This mode can always be used, it does not parse or generate
+patchset. This mode can always be used for &quot;normal&quot; spec files
+using %patch to apply the patches. It does not parse or generate
 any patch metadata. It also leaves patch naming including numbering
 to the user. Quilt mode is used by default if at least one patch is
 deemed as non-git.
@@ -147,7 +147,10 @@ lines are parsed and modified. Likewise, no modifications are done to the
 spec when it is used to unpack the sources in the <I>export</I> command.
 <P>
 
-When using autosetup the overall mode is git.
+Like in the git mode, only the patches/ directory is consulted for the actual
+patchset. This means that <B>rpmdev-patchbuild</B> is agnostic as to how these
+are created. A common way would be the <I>git format-patch</I> described for
+the git mode.
 <P>
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SPEC FILE MODIFICATIONS</H2>
@@ -243,6 +246,6 @@ If a specfile unpacks two separate directories on the top level
 This document was created by
 <A HREF="http://linux.die.net/man">man2html</A>,
 using the manual pages.<BR>
-Time: 16:36:55 GMT, October 22, 2015
+Time: 17:24:58 GMT, October 22, 2015
 </BODY>
 </HTML>
