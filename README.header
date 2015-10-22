@@ -9,7 +9,7 @@ workflow
     the patches are available for updating.
   - Modify sources.
   - Create new patches.
-  - Update patches in the Makefile.
+  - Update patches in the spec file.
   - Rebuild.
 
 Dependencies
@@ -23,7 +23,7 @@ Installation
 None. Just run the script, possibly after dropping it somewhere in
 your path.
 
-The manpage could be viewed using nroff -man rpmdev-pathcbuild
+The manpage could be viewed using *nroff -man rpmdev-patchbuild.1*
 
 Ah, the manpage:
 

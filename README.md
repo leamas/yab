@@ -9,7 +9,7 @@ workflow
     the patches are available for updating.
   - Modify sources.
   - Create new patches.
-  - Update patches in the Makefile.
+  - Update patches in the spec file.
   - Rebuild.
 
 Dependencies
@@ -23,7 +23,7 @@ Installation
 None. Just run the script, possibly after dropping it somewhere in
 your path.
 
-The manpage could be viewed using nroff -man rpmdev-pathcbuild
+The manpage could be viewed using *nroff -man rpmdev-patchbuild.1*
 
 Ah, the manpage:
 
@@ -34,7 +34,7 @@ Ah, the manpage:
 <HTML><HEAD><TITLE>Manpage of RPMDEV-PATCHBUILD</TITLE>
 </HEAD><BODY>
 <H1>RPMDEV-PATCHBUILD</H1>
-Section: User Commands (1)<BR>Updated: Last change: Aug 2015<BR><A HREF="#index">Index</A>
+Section: $Format:%h (1)<BR>Updated: Last change: Aug 2015<BR><A HREF="#index">Index</A>
 <A HREF="http://linux.die.net/man">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -90,20 +90,10 @@ file to work).
 
 <DL COMPACT>
 <DT><B>-m</B> ,<B>--mode</B> [<I>git</I>|<I>quilt</I>]<DD>
-<P>
-Work either in  git or quilt mode.
-<DT><DD>
-In git mode the build tree is initiated with a <I><A HREF="http://linux.die.net/man/1/git">git</A>(1)</I>
-repository, and each patch in the spec will be applied using
-<I>git am</I>. Requires that all spec patches are git-formatted.
-This mode is used by default if all patches in the spec are deemed
-as git patches according to some heuristics. See GIT USAGE NOTES.
-<DT><DD>
-In quilt mode the build tree is initiated with a <I><A HREF="http://linux.die.net/man/1/quilt">quilt</A>(1)</I>
-patchset. This mode can always be used, it does not parse or generate
-any patch metadata. It also leaves patch naming including numbering
-to the user. Quilt mode is used by default if at least one patch is
-deemed as non-git.
+Work either in  git or quilt mode. See QUILT MODE and GIT MODE.
+<DT><B>-a</B>,<B>--autosetup</B><DD>
+Don't update the <I>%patch</I> lines in the spec file, just the <I>Patch:</I>
+tag lines. See AUTOSETUP
 <DT><B>-o</B>,<B>--options</B><DD>
 Options used with  %patch when importing new patches. Defaults to
 <I>-p1</I>. Existing %patch invocations are used as-is.
@@ -116,16 +106,25 @@ Display version.
 <P>
 </DL>
 <A NAME="lbAG">&nbsp;</A>
-<H2>PATCH NUMBERING</H2>
+<H2>QUILT MODE</H2>
 
-When imported a new patch must be designated a number. If the patch
-filename doesnt have a numeric prefix the next available number is
-used. It the patch has a numeric prefix it will be used unless it's
-already used in the spec. In this case there is a warning and next
-available number is used.
+In quilt mode the build tree is initiated with a <I><A HREF="http://linux.die.net/man/1/quilt">quilt</A>(1)</I>
+patchset. This mode can always be used, it does not parse or generate
+any patch metadata. It also leaves patch naming including numbering
+to the user. Quilt mode is used by default if at least one patch is
+deemed as non-git.
 <P>
 <A NAME="lbAH">&nbsp;</A>
-<H2>GIT USAGE NOTES</H2>
+<H2>GIT  MODE</H2>
+
+<P>
+
+In git mode the build tree is initiated with a <I><A HREF="http://linux.die.net/man/1/git">git</A>(1)</I>
+repository, and each patch in the spec will be applied using
+<I>git am</I>. Requires that all spec patches are git-formatted.
+This mode is used by default if all patches in the spec are deemed
+as git patches according to some heuristics.
+<P>
 
 <B>rpmdev-patchbuild</B> does not import the git repo directly, it
 uses the <I>patchbuild/patches</I> directory. One way to feed it
@@ -139,6 +138,18 @@ In git mode all changes done by %prep besides the actual patching is
 discarded by <I>export</I>.
 <P>
 <A NAME="lbAI">&nbsp;</A>
+<H2>AUTOSETUP MODE</H2>
+
+In the autosetup mode <B>rpmdev-patchbuild</B> assumes that the  spec file
+doesn't use <I>%patch</I> macros for applying the patches. No modifications
+are done to the %prep section in the spec file, only the <I>Patch:</I> tag
+lines are parsed and modified. Likewise, no modifications are done to the
+spec when it is used to unpack the sources in the <I>export</I> command.
+<P>
+
+When using autosetup the overall mode is git.
+<P>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SPEC FILE MODIFICATIONS</H2>
 
 Updating an existing patch does not affect the spec file, only the contents
@@ -157,9 +168,14 @@ tag line is inserted after the last Source: and the patch line after %setup.
 Both deleted and inserted patches creates fixes which looks ugly and needs
 some manual editing before committing.
 <P>
+
+When imported a new patch must be designated a number. If the patch
+filename doesnt have a numeric prefix the next available number is
+used. It the patch has a numeric prefix it will be used unless it's
+already used in the spec. In this case there is a warning and next
+available number is used.
 <P>
-<P>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>EXAMPLES</H2>
 
 A session using <B>rpmdev-patchbuild</B> might look like:
@@ -181,12 +197,19 @@ A session using <B>rpmdev-patchbuild</B> might look like:
 </PRE>
 
 <P>
-<A NAME="lbAK">&nbsp;</A>
-<H2>FILES</H2>
-
-TBD
-<P>
 <A NAME="lbAL">&nbsp;</A>
+<H2>BUGS</H2>
+
+<P>
+When unpacking the build dependencies are not used. In corner cases where the
+%prep section uses tools from the builddeps the export command will fail.
+Installing the build dependencies for the spec file should fix it.
+<P>
+
+If a specfile unpacks two separate directories on the top level
+<B>fBrpmdev-patchbuild</B> gets confused.
+<P>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <P>
@@ -196,7 +219,8 @@ TBD
 <A HREF="http://linux.die.net/man/1/git">git</A>(1)
 <BR>
 
-<A HREF="http://linux.die.net/man/1/rpmbuild">rpmbuild</A>(1)
+<P>
+<P>
 <P>
 
 <HR>
@@ -207,17 +231,18 @@ TBD
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">ARGUMENTS</A><DD>
 <DT><A HREF="#lbAF">OPTIONS</A><DD>
-<DT><A HREF="#lbAG">PATCH NUMBERING</A><DD>
-<DT><A HREF="#lbAH">GIT USAGE NOTES</A><DD>
-<DT><A HREF="#lbAI">SPEC FILE MODIFICATIONS</A><DD>
-<DT><A HREF="#lbAJ">EXAMPLES</A><DD>
-<DT><A HREF="#lbAK">FILES</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">QUILT MODE</A><DD>
+<DT><A HREF="#lbAH">GIT  MODE</A><DD>
+<DT><A HREF="#lbAI">AUTOSETUP MODE</A><DD>
+<DT><A HREF="#lbAJ">SPEC FILE MODIFICATIONS</A><DD>
+<DT><A HREF="#lbAK">EXAMPLES</A><DD>
+<DT><A HREF="#lbAL">BUGS</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://linux.die.net/man">man2html</A>,
 using the manual pages.<BR>
-Time: 10:13:56 GMT, October 22, 2015
+Time: 16:36:55 GMT, October 22, 2015
 </BODY>
 </HTML>
