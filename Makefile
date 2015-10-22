@@ -7,7 +7,8 @@ README.md: README.header rpmdev-patchbuild.1 Makefile
 	man2html -H linux.die.net -M /man rpmdev-patchbuild.1 | \
 	    sed -e '/Content-type/d'  -e '/HREF=/s|\?1+|/1/|'>> $@
 
-pylint: .phony
+check: .phony
+	-python3-pep8 --config pep8.conf rpmdev-patchbuild
 	-python3-pylint --rcfile pylint.conf rpmdev-patchbuild
 
 .phony:

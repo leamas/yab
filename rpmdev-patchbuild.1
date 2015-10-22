@@ -1,4 +1,4 @@
-.TH RPMDEV-PATCHBUILD "1" "Last change: Aug 2015" "rpmdev-pathcbuild @VERSION" "User Commands"
+.TH RPMDEV-PATCHBUILD "1" "Last change: Aug 2015" "rpmdev-pathcbuild "version: $Format:%h %ci$" "User Commands"
 .SH NAME
 rpmdev-patchbuild - synchronize patch set between spec and source
 .SH SYNOPSIS
@@ -42,20 +42,11 @@ file to work).
 .SH OPTIONS
 .TP
 \fB\-m\fR ,\fB\-\-mode\fR [\fIgit\fR|\fIquilt\fR]
-
-Work either in  git or quilt mode.
-.IP
-In git mode the build tree is initiated with a \fIgit(1)\fR
-repository, and each patch in the spec will be applied using
-\fIgit am\fR. Requires that all spec patches are git-formatted.
-This mode is used by default if all patches in the spec are deemed
-as git patches according to some heuristics. See GIT USAGE NOTES.
-.IP
-In quilt mode the build tree is initiated with a \fIquilt(1)\fR
-patchset. This mode can always be used, it does not parse or generate
-any patch metadata. It also leaves patch naming including numbering
-to the user. Quilt mode is used by default if at least one patch is
-deemed as non-git.
+Work either in  git or quilt mode. See QUILT MODE and GIT MODE.
+.TP
+\fB-a\fR,\fB\-\-autosetup\fR
+Don't update the \fI%patch\fR lines in the spec file, just the \fIPatch:\fR
+tag lines. See AUTOSETUP
 .TP
 \fB-o\fR,\fB\-\-options\fR
 Options used with  %patch when importing new patches. Defaults to
@@ -70,14 +61,21 @@ Display usage summary.
 \fB\-v\fR,\fB\-\-version\fR
 Display version.
 
-.SH PATCH NUMBERING
-When imported a new patch must be designated a number. If the patch
-filename doesnt have a numeric prefix the next available number is
-used. It the patch has a numeric prefix it will be used unless it's
-already used in the spec. In this case there is a warning and next
-available number is used.
+.SH QUILT MODE
+In quilt mode the build tree is initiated with a \fIquilt(1)\fR
+patchset. This mode can always be used, it does not parse or generate
+any patch metadata. It also leaves patch naming including numbering
+to the user. Quilt mode is used by default if at least one patch is
+deemed as non-git.
 
-.SH GIT USAGE NOTES
+.SH GIT  MODE
+.P
+In git mode the build tree is initiated with a \fIgit(1)\fR
+repository, and each patch in the spec will be applied using
+\fIgit am\fR. Requires that all spec patches are git-formatted.
+This mode is used by default if all patches in the spec are deemed
+as git patches according to some heuristics.
+.P
 \fBrpmdev-patchbuild\fR does not import the git repo directly, it
 uses the \fIpatchbuild/patches\fR directory. One way to feed it
 is to just invoke something like \fIgit format-patch \-\-start-number 7
@@ -87,6 +85,15 @@ which generates a fresh, re-numbered patchset in ../patches.
 .P
 In git mode all changes done by %prep besides the actual patching is
 discarded by \fIexport\fR.
+
+.SH AUTOSETUP MODE
+In the autosetup mode \fBrpmdev-patchbuild\fR assumes that the  spec file
+doesn't use \fI%patch\fR macros for applying the patches. No modifications
+are done to the %prep section in the spec file, only the \fIPatch:\fR tag
+lines are parsed and modified. Likewise, no modifications are done to the
+spec when it is used to unpack the sources in the \fIexport\fR command.
+.P
+When using autosetup the overall mode is git.
 
 .SH SPEC FILE MODIFICATIONS
 Updating an existing patch does not affect the spec file, only the contents
@@ -102,7 +109,12 @@ tag line is inserted after the last Source: and the patch line after %setup.
 Both deleted and inserted patches creates fixes which looks ugly and needs
 some manual editing before committing.
 
-
+.SH PATCH NUMBERING
+When imported a new patch must be designated a number. If the patch
+filename doesnt have a numeric prefix the next available number is
+used. It the patch has a numeric prefix it will be used unless it's
+already used in the spec. In this case there is a warning and next
+available number is used.
 
 .SH EXAMPLES
 A session using \fBrpmdev-patchbuild\fR might look like:
@@ -123,8 +135,14 @@ A session using \fBrpmdev-patchbuild\fR might look like:
     $ git commit -am "foo fixed with new patches"
 .fi
 
-.SH FILES
-TBD
+.SH BUGS
+
+When unpacking the build dependencies are not used. In corner cases where the
+%prep section uses tools from the builddeps the export command will fail.
+Installing the build dependencies for the spec file should fix it.
+.P
+If a specfile unpacks two separate directories on the top level
+\fBfBrpmdev-patchbuild\fR gets confused.
 
 .SH SEE ALSO
 
@@ -132,4 +150,5 @@ quilt(1)
 .br
 git(1)
 .br
-rpmbuild(1)
+
+
