@@ -34,7 +34,7 @@ Ah, the manpage:
 <HTML><HEAD><TITLE>Manpage of RPMDEV-PATCHBUILD</TITLE>
 </HEAD><BODY>
 <H1>RPMDEV-PATCHBUILD</H1>
-Section: $Format:%h (1)<BR>Updated: Last change: Aug 2015<BR><A HREF="#index">Index</A>
+Section: User Commands (1)<BR>Updated: Last change: $Format:%ci$<BR><A HREF="#index">Index</A>
 <A HREF="http://linux.die.net/man">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -246,6 +246,6 @@ If a specfile unpacks two or more separate directories in the top level
 This document was created by
 <A HREF="http://linux.die.net/man">man2html</A>,
 using the manual pages.<BR>
-Time: 10:15:41 GMT, October 23, 2015
+Time: 13:24:12 GMT, October 23, 2015
 </BODY>
 </HTML>

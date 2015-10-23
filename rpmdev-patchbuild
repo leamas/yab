@@ -35,7 +35,7 @@ class Backend(object):
 
         paths = glob.glob(os.path.join(self.workdir, '*'))
         paths = [p for p in paths
-                 if not (p == 'patches' or p.endswith(self.TEMP_SPEC))]
+                 if not (p.endswith('patches') or p.endswith(self.TEMP_SPEC))]
         return paths[0] if paths else None
 
     def workdir_setup(self):
@@ -69,7 +69,7 @@ class Backend(object):
         ''' General setup done on every run. '''
         pass
 
-    def reset(self, args):     # pylint: disable=no-self-use,unused-argument
+    def reset(self, dummy):     # pylint: disable=no-self-use
         ''' Reset existing patchset and generate a new from SCM repo. '''
         print('Command "reset" is not implemented in this mode')
 
@@ -77,6 +77,10 @@ class Backend(object):
         ''' Return a spec file with all %patch lines changed to apply a
         patch according to current backend.
         '''
+        pass   # abstract
+
+    def get_patches(self):
+        ''' Return build tree patch list. '''
         pass   # abstract
 
 
@@ -94,8 +98,6 @@ class QuiltBackend(Backend):
         return spec_lines
 
     def get_patches(self):
-        ''' Return build tree patch list. '''
-
         patches = []
         paths = glob.glob(self.workdir + "/patches/series")
         if len(paths) != 1:
@@ -117,13 +119,10 @@ class QuiltBackend(Backend):
 class AutosetupBackend(Backend):
     ''' Autosetup backend implementation. '''
 
-    def bp_specfile(self, spec_lines, patches):
-        ''' Implements Backend.bp_specfile. '''
-        # pylint: disable=unused-argument
+    def bp_specfile(self, spec_lines, dummy):
         return spec_lines
 
     def get_patches(self):
-        ''' Return build tree patch list. '''
         pattern = os.path.join(self.patchdir, '*')
         return [Patch(p) for p in glob.glob(pattern)]
 
@@ -145,7 +144,6 @@ class GitBackend(Backend):
     GIT_FINISH = "cd {wd}; git reset -q || :; git checkout -q . || :"
 
     def bp_specfile(self, spec_lines, patches):
-
         inited = False
         for ix, patch in _spec_patchlines(spec_lines, patches):
             git_apply_patch = self.GIT_APPLY.format(path=patch.path)
@@ -157,12 +155,7 @@ class GitBackend(Backend):
         return spec_lines
 
     def get_patches(self):
-        ''' Return build tree patch list. '''
-
         patches = []
-        tempspec = os.path.join(self.workdir, 'self.TEMP_SPEC')
-        if os.path.exists(tempspec):
-            os.unlink(tempspec)
         for p in glob.glob(self.workdir + "/patches/*"):
             patches.append(Patch(p))
         return patches
@@ -187,7 +180,7 @@ class GitBackend(Backend):
         except subprocess.CalledProcessError:
             print("Warning: Trouble running git, check build directory.")
 
-    def reset(self, args):
+    def reset(self, dummy):
         ''' Overrides Backend.reset. '''
 
         if os.path.exists(self.patchdir):
@@ -317,7 +310,8 @@ def _parse_spec(args):
 def _check_status(new_patches, spec_patches):
     ''' Compute state in new patches by comparing with spec_patches. '''
 
-    status = {state: [] for state in ['clean', 'dirty', 'deleted', 'new']}
+    status = {state: []
+              for state in ['clean', 'dirty', 'deleted', 'new', 'conflict']}
     new_by_basename = {n.basename: n for n in new_patches}
     spec_by_basename = {s.basename: s for s in spec_patches}
     for s in spec_by_basename.keys():
@@ -333,6 +327,10 @@ def _check_status(new_patches, spec_patches):
     for n in new_by_basename:
         if n not in spec_by_basename:
             status['new'].append(n)
+        dummy, conflict = \
+            _get_new_patch_nr(new_by_basename[n], spec_patches, new_patches)
+        if conflict:
+            status['conflict'].append(n)
     return status
 
 
@@ -344,18 +342,14 @@ def _print_status(backend, spec_patches, args):
         return
     new_patches = backend.get_patches()
     status = _check_status(new_patches, spec_patches)
-    if status['deleted']:
-        print('\nUnused:')
-        print('    ' + '\n    '.join(sorted(status['deleted'])))
-    if status['new']:
-        print('\nNew:')
-        print('    ' + '\n    '.join(sorted(status['new'])))
-    if status['dirty']:
-        print('\nModified:')
-        print('    ' + '\n    '.join(sorted(status['dirty'])))
-    if status['clean']:
-        print('\nUnmodified:')
-        print('    ' + '\n    '.join(sorted(status['clean'])))
+    for label, key in [('Unused', 'deleted'),
+                       ('New', 'new'),
+                       ('Modified', 'dirty'),
+                       ('Unmodified', 'clean'),
+                       ('Conflicts', 'conflict')]:
+        if status[key]:
+            print('\n{}:'.format(label))
+            print('    ' + '\n    '.join(sorted(status[key])))
 
 
 def _find_ix(lines, regex):
@@ -373,23 +367,23 @@ def _find_ix(lines, regex):
 def _get_new_patch_nr(new, spec_patches, new_patches):
     ''' Return number to use for next patch. '''
 
-    nr_warning = "Warning: cannot use patch number {}, using {}"
     last = -1
     for p in spec_patches:
         if p.nr > last:
             last = p.nr
     my_nr = last + 1
 
+    added = \
+        {p.basename for p in new_patches} - {p.basename for p in spec_patches}
+    conflict = False
     match = re.match('^([0-9]+).*', new.basename)
     if match:
         want_nr = int(match.group(1))
-        numbers = [p.nr for p in spec_patches
-                   if p.nr in [n.nr for n in new_patches]]
-        if want_nr in numbers:
-            print(nr_warning.format(want_nr, my_nr))
+        if new.basename in added and want_nr in [p.nr for p in spec_patches]:
+            conflict = True
         else:
             my_nr = want_nr
-    return my_nr
+    return my_nr, conflict
 
 
 def _insert_patch(new, spec_lines, spec_patches, args):
@@ -485,10 +479,12 @@ def _import_patches(backend, args, spec_lines, spec_patches):
             _kill_patch(spec_lines, patch, args)
         else:
             print("Error: no status for " + patch.basename)
-    for patch in new_patches:
-        if patch.basename in status['new']:
-            patch.nr = _get_new_patch_nr(patch, spec_patches, new_patches)
-            _insert_patch(patch, spec_lines, spec_patches, args)
+    for patch in [n for n in new_patches if n.basename in status['new']]:
+        patch.nr, conflict = \
+            _get_new_patch_nr(patch, spec_patches, new_patches)
+        if conflict:
+            print("Warning: {}: conflict".format(patch.basename))
+        _insert_patch(patch, spec_lines, spec_patches, args)
 
     with open(args.spec, 'w') as f:
         f.write(''.join(spec_lines))
