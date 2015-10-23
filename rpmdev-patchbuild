@@ -13,6 +13,8 @@ import shutil
 import subprocess
 import sys
 
+_SPECTOOL = 'spectool'
+
 
 class Backend(object):
     ''' Responsible for setting up a build tree with the patch series and
@@ -46,7 +48,7 @@ class Backend(object):
         os.makedirs(self.workdir)
 
     def run_rpmbuild_bp(self, lines):
-        ''' Run rpmbuild -bp on the patched spec, implements export. '''
+        ''' Run rpmbuild -bp on the patched spect. '''
 
         specfile = os.path.join(self.workdir, self.TEMP_SPEC)
         with open(specfile, 'w') as f:
@@ -57,11 +59,16 @@ class Backend(object):
         print("Running: " + cmd)
         subprocess.check_call(cmd, shell=True)
 
-    def export(self, spec_lines, spec_patches):
+    def export(self, spec_lines, spec_patches, args):
         ''' Given a copy of the spec file lines + parsed patches, implement
         the 'export' command.
         '''
         self.workdir_setup()
+        cmd = [_SPECTOOL, '-g', args.spec]
+        try:
+            subprocess.check_call(cmd)
+        except subprocess.CalledProcessError:
+            print("Warning: problems retrieving sources.")
         bp_lines = self.bp_specfile(spec_lines, spec_patches)
         self.run_rpmbuild_bp(bp_lines)
 
@@ -126,9 +133,9 @@ class AutosetupBackend(Backend):
         pattern = os.path.join(self.patchdir, '*')
         return [Patch(p) for p in glob.glob(pattern)]
 
-    def export(self, spec_lines, spec_patches):
+    def export(self, spec_lines, spec_patches, args):
         ''' Overrides Backend.export. '''
-        Backend.export(self, spec_lines, spec_patches)
+        Backend.export(self, spec_lines, spec_patches, args)
         if not os.path.exists(self.patchdir):
             os.makedirs(self.patchdir)
         for patch in spec_patches:
@@ -160,10 +167,10 @@ class GitBackend(Backend):
             patches.append(Patch(p))
         return patches
 
-    def export(self, spec_lines, spec_patches):
+    def export(self, spec_lines, spec_patches, args):
         ''' Overrides Backend.export. '''
 
-        Backend.export(self, spec_lines, spec_patches)
+        Backend.export(self, spec_lines, spec_patches, args)
         if not os.path.exists(self.patchdir):
             os.makedirs(self.patchdir)
         for patch in spec_patches:
@@ -493,7 +500,7 @@ def _import_patches(backend, args, spec_lines, spec_patches):
 def _get_backend(args):
     ''' Try to find out what backend to use and return it. '''
 
-    LIST_PATCHES = ["spectool", "-P", "-l", args.spec]
+    LIST_PATCHES = [_SPECTOOL, "-P", "-l", args.spec]
     if args.mode == 'guess':
         try:
             patchlines = subprocess.check_output(LIST_PATCHES,
@@ -530,7 +537,7 @@ def main():
     backend.init(args)
     spec_lines, spec_patches = _parse_spec(args)
     if args.command == 'export':
-        backend.export(spec_lines.copy(), spec_patches)
+        backend.export(spec_lines.copy(), spec_patches, args)
     elif args.command == 'reset':
         backend.reset(args)
     elif args.command == 'status':

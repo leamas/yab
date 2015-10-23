@@ -64,8 +64,9 @@ In quilt mode the build tree is initiated with a \fIquilt(1)\fR
 patchset. This mode can always be used for "normal" spec files
 using %patch to apply the patches. It does not parse or generate
 any patch metadata. It also leaves patch naming including numbering
-to the user. Quilt mode is used by default if at least one patch is
-deemed as non-git.
+to the user. After a \fIquilt refresh\fR command the patchset is
+updated and visible for \fNrpmdev-patchbuild\fR. Quilt mode is
+used by default if at least one patch is deemed as non-git.
 
 .SH GIT  MODE
 .P
@@ -93,8 +94,8 @@ lines are parsed and modified. Likewise, no modifications are done to the
 spec when it is used to unpack the sources in the \fIexport\fR command.
 .P
 Like in the git mode, only the patches/ directory is consulted for the actual
-patchset. This means that \fBrpmdev-patchbuild\fR is agnostic as to how these
-are created. A common way would be the \fIgit format-patch\fR described for
+patchset. This means that \fBrpmdev-patchbuild\fR is agnostic as to how this
+is created. A common way would be the \fIgit format-patch\fR described for
 the git mode.
 
 .SH SPEC FILE MODIFICATIONS

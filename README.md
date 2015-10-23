@@ -111,8 +111,9 @@ In quilt mode the build tree is initiated with a <I><A HREF="http://linux.die.ne
 patchset. This mode can always be used for &quot;normal&quot; spec files
 using %patch to apply the patches. It does not parse or generate
 any patch metadata. It also leaves patch naming including numbering
-to the user. Quilt mode is used by default if at least one patch is
-deemed as non-git.
+to the user. After a <I>quilt refresh</I> command the patchset is
+updated and visible for rpmdev-patchbuild. Quilt mode is
+used by default if at least one patch is deemed as non-git.
 <P>
 <A NAME="lbAH">&nbsp;</A>
 <H2>GIT  MODE</H2>
@@ -148,8 +149,8 @@ spec when it is used to unpack the sources in the <I>export</I> command.
 <P>
 
 Like in the git mode, only the patches/ directory is consulted for the actual
-patchset. This means that <B>rpmdev-patchbuild</B> is agnostic as to how these
-are created. A common way would be the <I>git format-patch</I> described for
+patchset. This means that <B>rpmdev-patchbuild</B> is agnostic as to how this
+is created. A common way would be the <I>git format-patch</I> described for
 the git mode.
 <P>
 <A NAME="lbAJ">&nbsp;</A>
@@ -246,6 +247,6 @@ If a specfile unpacks two or more separate directories in the top level
 This document was created by
 <A HREF="http://linux.die.net/man">man2html</A>,
 using the manual pages.<BR>
-Time: 13:24:12 GMT, October 23, 2015
+Time: 13:56:07 GMT, October 23, 2015
 </BODY>
 </HTML>
