@@ -246,6 +246,6 @@ If a specfile unpacks two or more separate directories in the top level
 This document was created by
 <A HREF="http://linux.die.net/man">man2html</A>,
 using the manual pages.<BR>
-Time: 10:04:50 GMT, October 23, 2015
+Time: 10:15:41 GMT, October 23, 2015
 </BODY>
 </HTML>
