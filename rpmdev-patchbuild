@@ -142,6 +142,7 @@ class GitBackend(Backend):
 
     GIT_APPLY = "git am {path}\n"
     GIT_INIT = 'git init; git add .; git commit -aqm "Initial state"'
+    GIT_FINISH = "cd {wd}; git reset -q || :; git checkout -q . || :"
 
     def bp_specfile(self, spec_lines, patches):
 
@@ -179,12 +180,12 @@ class GitBackend(Backend):
     def run_rpmbuild_bp(self, lines):
         ''' Overrides Backend.run_rpmbuild_bp. '''
 
-        git_finish = "cd {wd}; git reset -q || :; git checkout -q . || :"
         Backend.run_rpmbuild_bp(self, lines)
         try:
-            subprocess.call(git_finish.format(wd=self.builddir), shell=True)
+            subprocess.call(self.GIT_FINISH.format(wd=self.builddir),
+                            shell=True)
         except subprocess.CalledProcessError:
-            pass
+            print("Warning: Trouble running git, check build directory.")
 
     def reset(self, args):
         ''' Overrides Backend.reset. '''
@@ -233,31 +234,27 @@ def _spec_patchlines(spec_lines, patches):
     ''' Return a generator of (index, patch) to all valid %patch lines
     in spec_lines.
     '''
+    def get_patch(patches, regex, string):
+        ''' Return (patch number, error-msg) extracted from string. '''
+        match = re.search(regex, string)
+        if not match:
+            return None, "Cannot parse patch line: " + string
+        nr = int(match.group(1))
+        found = [p for p in patches if p.nr == nr]
+        if not found:
+            return None, "Cannot find patch definition for: " + string
+        if len(found) > 1:
+            return None, "Multiple patch definitions for: " + string
+        return found[0], None
+
     for ix in range(len(spec_lines)):
         line = spec_lines[ix]
         if line.strip().lower().startswith('%patch'):
-            patch, msg = _patch_by_regex_in_string(patches,
-                                                   '%patch([0-9]+)',
-                                                   line)
-            if not patch:
-                print("Cannot parse %patch line: " + msg)
-            else:
+            patch, msg = get_patch(patches, '%patch([0-9]+)', line)
+            if patch:
                 yield ix, patch
-
-
-def _patch_by_regex_in_string(patches, regex, string):
-    ''' Return (patch number, error-msg) after extracting nr from string. '''
-
-    match = re.search(regex, string)
-    if not match:
-        return None, "Cannot parse patch line: " + string
-    nr = int(match.group(1))
-    found = [p for p in patches if p.nr == nr]
-    if not found:
-        return None, "Cannot find patch definition for: " + string
-    if len(found) > 1:
-        return None, "Multiple patch definitions for: " + string
-    return found[0], None
+            else:
+                print("Cannot parse %patch line: " + msg)
 
 
 def _parse_arguments():
@@ -441,12 +438,12 @@ def _kill_patch(spec_lines, victim, args):
                               spec_lines[ix])
             if match:
                 spec_lines[ix] = '# (unused) ' + spec_lines[ix]
+                if args.mode == 'autosetup':
+                    return
                 nr = match.group(1)
                 state = 2
                 continue
         elif state == 2:
-            if args.mode == 'autosetup':
-                return
             match = re.search(r'^\s*%Patch' + nr,
                               spec_lines[ix],
                               re.IGNORECASE)

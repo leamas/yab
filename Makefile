@@ -11,5 +11,9 @@ check: .phony
 	-python3-pep8 --config pep8.conf rpmdev-patchbuild
 	-python3-pylint --rcfile pylint.conf rpmdev-patchbuild
 
+archive: rpmdev-patchbuild.tar.gz
+rpmdev-patchbuild.tar.gz:  rpmdev-patchbuild rpmdev-patchbuild.1
+	git archive --prefix rpmdev-patchbuild/ -o $@ HEAD
+
 .phony:
 
