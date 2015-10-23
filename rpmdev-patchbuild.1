@@ -43,12 +43,12 @@ file to work).
 .TP
 \fB\-m\fR ,\fB\-\-mode\fR [\fIgit\fR|\fIquilt\fR|\fIautosetup\fR]
 Work either in  git,  quilt or autosetup mode. See QUILT MODE, GIT MODE,
-and AUTOSETUP MODE. Modes can be abridged the first letter \fIg\fR,
+and AUTOSETUP MODE. Modes can be abridged to the initial letters \fIg\fR,
 \fIq\fR and \fIa\fR.
 .TP
 \fB-o\fR,\fB\-\-options\fR
-Options used with  %patch when importing new patches. Defaults to
-\fI-p1\fR. Existing %patch invocations are used as-is.
+Options used with  \fI%patch\fR when importing new patches. Defaults to
+\fI-p1\fR. Existing \fI%patch\fR invocations are used as-is.
 .TP
 \fB-w\fR,\fB\-\-working-dir\fR
 Build directory where sources are unpacked. Defaults to \fIpatchbuild\fr.
@@ -142,8 +142,8 @@ When unpacking the build dependencies are not used. In corner cases where the
 %prep section uses tools from the builddeps the export command will fail.
 Installing the build dependencies for the spec file should fix it.
 .P
-If a specfile unpacks two separate directories on the top level
-\fBfBrpmdev-patchbuild\fR gets confused.
+If a specfile unpacks two or more separate directories in the top level
+\fBrpmdev-patchbuild\fR gets confused.
 
 .SH SEE ALSO
 

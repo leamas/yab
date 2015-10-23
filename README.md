@@ -91,11 +91,11 @@ file to work).
 <DL COMPACT>
 <DT><B>-m</B> ,<B>--mode</B> [<I>git</I>|<I>quilt</I>|<I>autosetup</I>]<DD>
 Work either in  git,  quilt or autosetup mode. See QUILT MODE, GIT MODE,
-and AUTOSETUP MODE. Modes can be abridged the first letter <I>g</I>,
+and AUTOSETUP MODE. Modes can be abridged to the initial letters <I>g</I>,
 <I>q</I> and <I>a</I>.
 <DT><B>-o</B>,<B>--options</B><DD>
-Options used with  %patch when importing new patches. Defaults to
-<I>-p1</I>. Existing %patch invocations are used as-is.
+Options used with  <I>%patch</I> when importing new patches. Defaults to
+<I>-p1</I>. Existing <I>%patch</I> invocations are used as-is.
 <DT><B>-w</B>,<B>--working-dir</B><DD>
 Build directory where sources are unpacked. Defaults to <I>patchbuild</I>.
 <DT><B>-h</B>,<B>--help</B><DD>
@@ -209,8 +209,8 @@ When unpacking the build dependencies are not used. In corner cases where the
 Installing the build dependencies for the spec file should fix it.
 <P>
 
-If a specfile unpacks two separate directories on the top level
-<B>fBrpmdev-patchbuild</B> gets confused.
+If a specfile unpacks two or more separate directories in the top level
+<B>rpmdev-patchbuild</B> gets confused.
 <P>
 <A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -246,6 +246,6 @@ If a specfile unpacks two separate directories on the top level
 This document was created by
 <A HREF="http://linux.die.net/man">man2html</A>,
 using the manual pages.<BR>
-Time: 17:24:58 GMT, October 22, 2015
+Time: 10:04:50 GMT, October 23, 2015
 </BODY>
 </HTML>
