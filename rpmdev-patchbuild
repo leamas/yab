@@ -8,6 +8,7 @@ import argparse
 import glob
 import os
 import os.path
+import pickle
 import re
 import shutil
 import subprocess
@@ -94,7 +95,8 @@ class Backend(object):
 class QuiltBackend(Backend):
     ''' Quilt backend implementation. '''
 
-    QUILT_IMPORT = "quilt --quiltrc - import {path}; quilt --quiltrc - push\n"
+    QUILT_IMPORT = \
+        "quilt --quiltrc - import -p2 {path}; quilt --quiltrc - push\n"
 
     def bp_specfile(self, spec_lines, patches):
         ''' Implements Backend.bp_specfile. '''
@@ -113,7 +115,7 @@ class QuiltBackend(Backend):
         else:
             with open(paths[0]) as f:
                 series = f.readlines()
-            series = [s.strip() for s in series]
+            series = [s.split()[0] for s in series]
         for p in glob.glob(self.workdir + "/patches/*"):
             if p.endswith('/series'):
                 continue
@@ -257,7 +259,7 @@ def _spec_patchlines(spec_lines, patches):
                 print("Cannot parse %patch line: " + msg)
 
 
-def _parse_arguments():
+def _parse_arguments(sticky_args=None):
     ''' Parse the command line, return parsed arguments . '''
 
     parser = argparse.ArgumentParser()
@@ -274,15 +276,17 @@ def _parse_arguments():
         "-m", "--mode",
         choices=['git', 'g', 'quilt', 'q', 'autosetup', 'a'],
         help="Work in git, quilt or autosetup mode [guessed]",
-        default="guess")
+        default=sticky_args.mode if sticky_args else "guess")
     parser.add_argument(
         "-w", "--working-dir",
         help="Build directory [patchbuild]",
         default="patchbuild")
+    opts = '-p2' if sticky_args and sticky_args.mode == 'quilt' else '-p1'
     parser.add_argument(
         "-o", "--options",
         help="Options to %%patch when importing new patches [-p1]",
-        default='-p1')
+        default=opts)
+
     args = parser.parse_args()
     if args.command == 'version':
         print("rpmdev-patchbuild $Format:%h %ci$")
@@ -529,15 +533,37 @@ def _get_backend(args):
         return QuiltBackend(args.working_dir)
 
 
+def get_sticky_options(args):
+    ''' Return args with sticky options from save_sticky_options(). '''
+    rcfile = os.path.join(args.working_dir, '.args')
+    try:
+        with open(rcfile, 'rb') as f:
+            args = pickle.load(f)
+    except (FileNotFoundError, TypeError):
+        return None
+    else:
+        return args
+
+
+def save_sticky_options(args):
+    ''' Save args in a well-known file. '''
+    rcfile = os.path.join(args.working_dir, '.args')
+    with open(rcfile, 'wb') as f:
+        pickle.dump(args, f)
+
+
 def main():
     ''' Indeed: main program. '''
 
     args = _parse_arguments()
+    opts = get_sticky_options(args)
+    args = _parse_arguments(opts)
     backend = _get_backend(args)
     backend.init(args)
     spec_lines, spec_patches = _parse_spec(args)
     if args.command == 'export':
         backend.export(spec_lines.copy(), spec_patches, args)
+        save_sticky_options(args)
     elif args.command == 'reset':
         backend.reset(args)
     elif args.command == 'status':
